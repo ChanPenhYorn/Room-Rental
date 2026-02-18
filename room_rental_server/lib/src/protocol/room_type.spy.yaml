@@ -1,0 +1,9 @@
+enum: RoomType
+values:
+  - studio
+  - apartment1br
+  - apartment2br
+  - dormitory
+  - villa
+  - house
+  - condo

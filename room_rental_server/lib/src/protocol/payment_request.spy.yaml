@@ -1,0 +1,19 @@
+class: PaymentRequest
+fields:
+  merchantId: String
+  tranId: String
+  amount: String
+  hash: String
+  reqTime: String
+  firstName: String?
+  lastName: String?
+  email: String?
+  phone: String?
+  type: String?
+  paymentOption: String?
+  items: String?
+  currency: String?
+  shipping: String?
+  continueSuccessUrl: String?
+  returnUrl: String?
+  checkoutUrl: String

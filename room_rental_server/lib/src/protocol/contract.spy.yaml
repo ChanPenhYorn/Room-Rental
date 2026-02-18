@@ -1,0 +1,13 @@
+class: Contract
+table: contract
+fields:
+  bookingId: int
+  booking: Booking?, relation(name=booking_contract, field=bookingId)
+  signedAt: DateTime?
+  contractText: String
+  status: ContractStatus
+  bills: List<Bill>?, relation(name=contract_bills)
+indexes:
+  contract_booking_idx:
+    fields: bookingId
+    unique: true

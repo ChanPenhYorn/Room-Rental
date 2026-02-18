@@ -1,0 +1,12 @@
+class: Favorite
+table: favorite
+fields:
+  userId: int
+  user: User?, relation(field=userId)
+  roomId: int
+  room: Room?, relation(field=roomId)
+  createdAt: DateTime
+indexes:
+  favorite_user_room_unique_idx:
+    fields: userId, roomId
+    unique: true

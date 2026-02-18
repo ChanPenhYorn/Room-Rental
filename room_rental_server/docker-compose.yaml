@@ -1,0 +1,44 @@
+services:
+  # Development services
+  postgres:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "8090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: room_rental
+      POSTGRES_PASSWORD: "5U-4MyieKyg_YodXtlrGHEjS4_5mhbrn"
+    volumes:
+      - room_rental_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6.2.6
+    ports:
+      - "8091:6379"
+    command: redis-server --requirepass "087zXiH6YX5Pn63L1lnpWw7Tueb1Zg7a"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+  # Test services
+  postgres_test:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "9090:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: room_rental_test
+      POSTGRES_PASSWORD: "UrD2b4ELB8kOkxlckozDmsbguMBFv0qC"
+    volumes:
+      - room_rental_test_data:/var/lib/postgresql/data
+
+  redis_test:
+    image: redis:6.2.6
+    ports:
+      - "9091:6379"
+    command: redis-server --requirepass "P3AKqgowihbHFZycArW79fZVuX1VMu1h"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+volumes:
+  room_rental_data:
+  room_rental_test_data:

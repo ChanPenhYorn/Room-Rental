@@ -1,0 +1,5 @@
+class: RoomFacility
+table: room_facility
+fields:
+  room: Room?, relation(name=room_facilities)
+  facility: Facility?, relation(name=facility_rooms)

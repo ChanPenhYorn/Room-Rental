@@ -1,0 +1,4 @@
+enum: BillStatus
+values:
+  - paid
+  - unpaid

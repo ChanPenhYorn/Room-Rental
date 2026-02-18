@@ -1,0 +1,8 @@
+class: ChatMessage
+table: chat_message
+fields:
+  sender: User?, relation(name=sender_messages)
+  receiver: User?, relation(name=receiver_messages)
+  message: String
+  sentAt: DateTime
+  isRead: bool

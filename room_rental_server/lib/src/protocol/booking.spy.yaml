@@ -1,0 +1,14 @@
+class: Booking
+table: booking
+fields:
+  roomId: int
+  room: Room?, relation(field=roomId, name=room_bookings)
+  userId: int
+  user: User?, relation(field=userId, name=user_bookings)
+  checkIn: DateTime
+  checkOut: DateTime
+  totalPrice: double
+  status: BookingStatus
+  transactionId: String?
+  createdAt: DateTime
+  contract: Contract?, relation(name=booking_contract)

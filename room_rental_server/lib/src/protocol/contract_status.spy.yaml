@@ -1,0 +1,6 @@
+enum: ContractStatus
+values:
+  - pending
+  - active
+  - terminated
+  - completed

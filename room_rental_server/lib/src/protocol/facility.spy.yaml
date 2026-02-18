@@ -1,0 +1,6 @@
+class: Facility
+table: facility
+fields:
+  name: String
+  icon: String
+  rooms: List<RoomFacility>?, relation(name=facility_rooms)

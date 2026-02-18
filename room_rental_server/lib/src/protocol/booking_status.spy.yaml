@@ -1,0 +1,7 @@
+enum: BookingStatus
+values:
+  - pending_payment
+  - confirmed
+  - active
+  - completed
+  - cancelled

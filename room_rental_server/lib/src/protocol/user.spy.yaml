@@ -1,0 +1,25 @@
+class: User
+table: user
+fields:
+  userInfoId: int?
+  userInfo: module:auth:UserInfo?, relation(field=userInfoId)
+  authUserId: String?
+  fullName: String
+  phone: String?
+  bio: String?
+  role: UserRole
+  profileImage: String?
+  createdAt: DateTime
+  rooms: List<Room>?, relation(name=user_rooms)
+  bookings: List<Booking>?, relation(name=user_bookings)
+  sentMessages: List<ChatMessage>?, relation(name=sender_messages)
+  receivedMessages: List<ChatMessage>?, relation(name=receiver_messages)
+  favorites: List<Favorite>?, relation
+  reviews: List<Review>?, relation
+indexes:
+  user_user_info_idx:
+    fields: userInfoId
+    unique: true
+  user_auth_user_id_idx:
+    fields: authUserId
+    unique: true

@@ -1,0 +1,7 @@
+class: Bill
+table: bill
+fields:
+  contract: Contract?, relation(name=contract_bills)
+  amount: double
+  dueDate: DateTime
+  status: BillStatus

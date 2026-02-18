@@ -1,0 +1,21 @@
+class: Room
+table: room
+fields:
+  owner: User?, relation(name=user_rooms)
+  title: String
+  description: String
+  price: double
+  location: String
+  latitude: double
+  longitude: double
+  rating: double
+  type: RoomType
+  imageUrl: String?
+  images: List<String>?
+  isAvailable: bool
+  createdAt: DateTime
+  status: RoomStatus
+  facilities: List<RoomFacility>?, relation(name=room_facilities)
+  bookings: List<Booking>?, relation(name=room_bookings)
+  favorites: List<Favorite>?, relation
+  reviews: List<Review>?, relation

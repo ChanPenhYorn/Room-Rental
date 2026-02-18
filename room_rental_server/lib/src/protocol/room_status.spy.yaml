@@ -1,0 +1,6 @@
+enum: RoomStatus
+values:
+  - pending
+  - approved
+  - rejected
+  - archived
