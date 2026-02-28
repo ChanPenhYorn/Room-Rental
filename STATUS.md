@@ -1,4 +1,4 @@
-# Room Rental App - Current Status & Next Steps
+# Dwellly App - Current Status & Next Steps
 
 ## ✅ What's Been Completed
 

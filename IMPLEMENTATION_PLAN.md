@@ -1,4 +1,4 @@
-# Complete Room Rental App Implementation Plan
+# Complete Dwellly App Implementation Plan
 
 ## Current Status
 - ✅ Home Screen (Complete 5-tab navigation)

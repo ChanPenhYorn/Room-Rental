@@ -1,7 +1,7 @@
-# Room Rental App - Implementation Summary
+# Dwellly App - Implementation Summary
 
 ## Overview
-Production-ready Flutter application implementing a Room Rental platform with Clean Architecture, Serverpod backend, and pixel-perfect Figma design implementation.
+Production-ready Flutter application implementing a Dwellly platform with Clean Architecture, Serverpod backend, and pixel-perfect Figma design implementation.
 
 ## Architecture
 
@@ -235,7 +235,7 @@ flutter run
 
 ## Conclusion
 
-This implementation provides a **production-ready foundation** for a Room Rental application with:
+This implementation provides a **production-ready foundation** for a Dwellly application with:
 - **Scalable architecture** following Clean Architecture principles
 - **Type-safe backend** with Serverpod
 - **Modern UI** matching Figma specifications pixel-perfectly

@@ -1,5 +1,5 @@
 Great 🔥 your plan is already very strong.
-Now let’s **upgrade your AI prompt** so it can generate a production-ready Room Rental App (Flutter + Serverpod) with proper auth, realistic mock data, and full working flow.
+Now let’s **upgrade your AI prompt** so it can generate a production-ready Dwellly App (Flutter + Serverpod) with proper auth, realistic mock data, and full working flow.
 
 Below is your **improved master prompt** 👇 — structured, clear, and optimized for code generation.
 
@@ -15,7 +15,7 @@ Use this when generating the complete system.
 
 You are a senior Flutter + Serverpod architect.
 
-Generate a complete production-ready Room Rental App using:
+Generate a complete production-ready Dwellly App using:
 
 * Flutter (Clean Architecture)
 * Riverpod (state management)

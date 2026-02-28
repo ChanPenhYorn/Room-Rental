@@ -1,4 +1,4 @@
-# Room Rental App - Quick Start Guide
+# Dwellly App - Quick Start Guide
 
 ## 🚀 Getting Started
 

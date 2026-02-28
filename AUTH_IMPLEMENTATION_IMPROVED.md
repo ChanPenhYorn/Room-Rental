@@ -8,7 +8,7 @@ AUTH_IMPLEMENTATION_IMPROVED.md
 
 ---
 
-# 🔐 Room Rental App — Auth Improvement Plan
+# 🔐 Dwellly App — Auth Improvement Plan
 
 ---
 

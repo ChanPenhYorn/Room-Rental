@@ -2,12 +2,11 @@ name: _
 publish_to: none
 
 environment:
-  sdk: '^3.8.0'
+  sdk: "^3.8.0"
 
 workspace:
-  - room_rental_client
-  - room_rental_server
-  - room_rental_flutter
+  - dwellly_client
+  - dwellly_server
+  - dwellly_flutter
 dependency_overrides:
   flutter_secure_storage: ^10.0.0
-

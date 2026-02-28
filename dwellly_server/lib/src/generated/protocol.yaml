@@ -1,0 +1,53 @@
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+auth:
+  - getMyProfile:
+  - updateProfile:
+booking:
+  - createBooking:
+  - getMyBookings:
+  - getBookingById:
+dev:
+  - getRegistrationCode:
+favorite:
+  - toggleFavorite:
+  - getFavoriteRoomIds:
+  - getUserFavorites:
+ownerRequest:
+  - submitRequest:
+  - getMyRequest:
+  - getAllRequests:
+  - updateRequestStatus:
+payment:
+  - createAbaPaymentRequest:
+  - verifyAbaTransaction:
+room:
+  - getRooms:
+  - getRoomById:
+  - searchRooms:
+  - filterRooms:
+  - createRoom:
+  - getMyRooms:
+  - getAllRoomsAsAdmin:
+  - getPendingRooms:
+  - updateRoomStatus:
+  - toggleRoomAvailability:
+  - requestRoomUpdate:
+  - deleteRoom:
+seed:
+  - seedData:
+user:
+  - getAllUsers:
+  - updateUserRole:
+  - getUserStats:
+greeting:
+  - hello:
