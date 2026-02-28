@@ -40,11 +40,13 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     required this.createdAt,
     required this.status,
     this.rejectionReason,
+    this.pendingData,
+    bool? hasPendingEdit,
     this.facilities,
     this.bookings,
     this.favorites,
     this.reviews,
-  });
+  }) : hasPendingEdit = hasPendingEdit ?? false;
 
   factory Room({
     int? id,
@@ -64,6 +66,8 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     required DateTime createdAt,
     required _i4.RoomStatus status,
     String? rejectionReason,
+    String? pendingData,
+    bool? hasPendingEdit,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -97,6 +101,8 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       ),
       status: _i4.RoomStatus.fromJson((jsonSerialization['status'] as String)),
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
+      pendingData: jsonSerialization['pendingData'] as String?,
+      hasPendingEdit: jsonSerialization['hasPendingEdit'] as bool?,
       facilities: jsonSerialization['facilities'] == null
           ? null
           : _i9.Protocol().deserialize<List<_i5.RoomFacility>>(
@@ -159,6 +165,10 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   String? rejectionReason;
 
+  String? pendingData;
+
+  bool hasPendingEdit;
+
   List<_i5.RoomFacility>? facilities;
 
   List<_i6.Booking>? bookings;
@@ -191,6 +201,8 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     DateTime? createdAt,
     _i4.RoomStatus? status,
     String? rejectionReason,
+    String? pendingData,
+    bool? hasPendingEdit,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -217,6 +229,8 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'createdAt': createdAt.toJson(),
       'status': status.toJson(),
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      if (pendingData != null) 'pendingData': pendingData,
+      'hasPendingEdit': hasPendingEdit,
       if (facilities != null)
         'facilities': facilities?.toJson(valueToJson: (v) => v.toJson()),
       if (bookings != null)
@@ -249,6 +263,8 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'createdAt': createdAt.toJson(),
       'status': status.toJson(),
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
+      if (pendingData != null) 'pendingData': pendingData,
+      'hasPendingEdit': hasPendingEdit,
       if (facilities != null)
         'facilities': facilities?.toJson(
           valueToJson: (v) => v.toJsonForProtocol(),
@@ -327,6 +343,8 @@ class _RoomImpl extends Room {
     required DateTime createdAt,
     required _i4.RoomStatus status,
     String? rejectionReason,
+    String? pendingData,
+    bool? hasPendingEdit,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -349,6 +367,8 @@ class _RoomImpl extends Room {
          createdAt: createdAt,
          status: status,
          rejectionReason: rejectionReason,
+         pendingData: pendingData,
+         hasPendingEdit: hasPendingEdit,
          facilities: facilities,
          bookings: bookings,
          favorites: favorites,
@@ -377,6 +397,8 @@ class _RoomImpl extends Room {
     DateTime? createdAt,
     _i4.RoomStatus? status,
     Object? rejectionReason = _Undefined,
+    Object? pendingData = _Undefined,
+    bool? hasPendingEdit,
     Object? facilities = _Undefined,
     Object? bookings = _Undefined,
     Object? favorites = _Undefined,
@@ -404,6 +426,8 @@ class _RoomImpl extends Room {
       rejectionReason: rejectionReason is String?
           ? rejectionReason
           : this.rejectionReason,
+      pendingData: pendingData is String? ? pendingData : this.pendingData,
+      hasPendingEdit: hasPendingEdit ?? this.hasPendingEdit,
       facilities: facilities is List<_i5.RoomFacility>?
           ? facilities
           : this.facilities?.map((e0) => e0.copyWith()).toList(),
@@ -503,6 +527,16 @@ class RoomUpdateTable extends _i1.UpdateTable<RoomTable> {
         table.rejectionReason,
         value,
       );
+
+  _i1.ColumnValue<String, String> pendingData(String? value) => _i1.ColumnValue(
+    table.pendingData,
+    value,
+  );
+
+  _i1.ColumnValue<bool, bool> hasPendingEdit(bool value) => _i1.ColumnValue(
+    table.hasPendingEdit,
+    value,
+  );
 }
 
 class RoomTable extends _i1.Table<int?> {
@@ -570,6 +604,15 @@ class RoomTable extends _i1.Table<int?> {
       'rejectionReason',
       this,
     );
+    pendingData = _i1.ColumnString(
+      'pendingData',
+      this,
+    );
+    hasPendingEdit = _i1.ColumnBool(
+      'hasPendingEdit',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final RoomUpdateTable updateTable;
@@ -605,6 +648,10 @@ class RoomTable extends _i1.Table<int?> {
   late final _i1.ColumnEnum<_i4.RoomStatus> status;
 
   late final _i1.ColumnString rejectionReason;
+
+  late final _i1.ColumnString pendingData;
+
+  late final _i1.ColumnBool hasPendingEdit;
 
   _i5.RoomFacilityTable? ___facilities;
 
@@ -781,6 +828,8 @@ class RoomTable extends _i1.Table<int?> {
     createdAt,
     status,
     rejectionReason,
+    pendingData,
+    hasPendingEdit,
   ];
 
   @override

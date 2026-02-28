@@ -42,6 +42,7 @@ room:
   - getPendingRooms:
   - updateRoomStatus:
   - toggleRoomAvailability:
+  - requestRoomUpdate:
   - deleteRoom:
 seed:
   - seedData:

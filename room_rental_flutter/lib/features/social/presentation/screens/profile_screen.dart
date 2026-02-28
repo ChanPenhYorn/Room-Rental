@@ -10,6 +10,8 @@ import 'package:room_rental_flutter/features/property_management/presentation/sc
 import 'package:room_rental_flutter/features/social/presentation/screens/personal_information_screen.dart';
 import 'package:room_rental_flutter/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:room_rental_flutter/features/owner/presentation/screens/owner_dashboard_screen.dart';
+import 'package:room_rental_flutter/features/owner_request/presentation/screens/become_owner_screen.dart';
+import 'package:room_rental_flutter/features/owner_request/presentation/providers/owner_request_providers.dart';
 
 /// Profile Screen
 /// Displays user profile details and settings
@@ -85,6 +87,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         );
                       },
                     ),
+                    if (_userProfile?.role == UserRole.tenant) ...[
+                      const SizedBox(height: 12),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final requestAsync = ref.watch(
+                            myOwnerRequestProvider,
+                          );
+                          return requestAsync.when(
+                            data: (request) {
+                              final isPending =
+                                  request?.status == OwnerRequestStatus.pending;
+                              return _buildOptionItem(
+                                context,
+                                icon: Icons.real_estate_agent_outlined,
+                                title: isPending
+                                    ? 'Request Pending'
+                                    : 'Become an Owner',
+                                subtitle: isPending
+                                    ? 'Your application is being reviewed'
+                                    : 'Start listing your properties today',
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const BecomeOwnerScreen(),
+                                  ),
+                                ),
+                              );
+                            },
+                            loading: () => const LinearProgressIndicator(),
+                            error: (e, _) => const SizedBox.shrink(),
+                          );
+                        },
+                      ),
+                    ],
                     if (_userProfile?.role == UserRole.admin ||
                         _userProfile?.role == UserRole.owner) ...[
                       const SizedBox(height: 24),

@@ -18,20 +18,20 @@ class SignUpScreen extends ConsumerStatefulWidget {
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: "Test Owner");
+  final _nameController = TextEditingController(text: "Test User");
   final _emailController = TextEditingController(
-    text: "test@example.com",
+    text: "test@roomrental.com",
   );
   final _phoneController = TextEditingController(
     text: "123456789",
   );
-  final _passwordController = TextEditingController(text: "password123");
-  final _confirmPasswordController = TextEditingController(text: "password123");
+  final _passwordController = TextEditingController(text: "password");
+  final _confirmPasswordController = TextEditingController(text: "password");
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
   bool _isLoading = false;
-  UserRole _selectedRole = UserRole.tenant;
+  final UserRole _selectedRole = UserRole.tenant;
 
   @override
   void dispose() {

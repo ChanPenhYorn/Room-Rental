@@ -30,6 +30,8 @@ _$RoomEntityImpl _$$RoomEntityImplFromJson(Map<String, dynamic> json) =>
           RoomStatus.pending,
       ownerName: json['ownerName'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
+      hasPendingEdit: json['hasPendingEdit'] as bool? ?? false,
+      pendingData: json['pendingData'] as String?,
     );
 
 Map<String, dynamic> _$$RoomEntityImplToJson(_$RoomEntityImpl instance) =>
@@ -50,6 +52,8 @@ Map<String, dynamic> _$$RoomEntityImplToJson(_$RoomEntityImpl instance) =>
       'status': instance.status,
       'ownerName': instance.ownerName,
       'rejectionReason': instance.rejectionReason,
+      'hasPendingEdit': instance.hasPendingEdit,
+      'pendingData': instance.pendingData,
     };
 
 const _$RoomTypeEnumMap = {

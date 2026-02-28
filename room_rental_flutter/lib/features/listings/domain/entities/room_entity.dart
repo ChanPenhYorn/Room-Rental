@@ -23,6 +23,8 @@ class RoomEntity with _$RoomEntity {
     @Default(RoomStatus.pending) RoomStatus status,
     String? ownerName,
     String? rejectionReason,
+    @Default(false) bool hasPendingEdit,
+    String? pendingData,
   }) = _RoomEntity;
 
   factory RoomEntity.fromJson(Map<String, dynamic> json) =>

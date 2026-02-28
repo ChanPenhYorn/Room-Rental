@@ -15,4 +15,5 @@ abstract class RoomRepository {
   Future<List<RoomEntity>> getAllRoomsAsAdmin();
   Future<bool> toggleRoomAvailability(int roomId);
   Future<bool> deleteRoom(int roomId);
+  Future<bool> requestRoomUpdate(int roomId, Room updatedRoom);
 }

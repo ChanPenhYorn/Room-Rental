@@ -145,6 +145,18 @@ class RoomRepositoryImpl implements RoomRepository {
               .where((n) => n.isNotEmpty)
               .toList() ??
           [],
+      hasPendingEdit: dto.hasPendingEdit,
+      pendingData: dto.pendingData,
     );
+  }
+
+  @override
+  Future<bool> requestRoomUpdate(int roomId, Room updatedRoom) async {
+    try {
+      return await client.room.requestRoomUpdate(roomId, updatedRoom);
+    } catch (e) {
+      print('❌ [API] Error requesting room update: $e');
+      return false;
+    }
   }
 }

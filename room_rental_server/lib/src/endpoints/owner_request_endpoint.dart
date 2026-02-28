@@ -11,15 +11,15 @@ class OwnerRequestEndpoint extends Endpoint {
     Session session, {
     String? message,
   }) async {
-    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
-    if (userInfoId == null) return null;
-
-    final user = await User.db.findFirstRow(
-      session,
-      where: (t) => t.userInfoId.equals(userInfoId),
+    session.log(
+      'OwnerRequestEndpoint: Starting submitRequest for message: $message',
     );
-
-    if (user == null) return null;
+    final user = await UserUtils.getOrCreateUser(session);
+    if (user == null) {
+      session.log('OwnerRequestEndpoint: User profile not found');
+      return null;
+    }
+    session.log('OwnerRequestEndpoint: Found user id: ${user.id}');
 
     // Check if there's already a pending or approved request
     final existingRequest = await BecomeOwnerRequest.db.findFirstRow(
@@ -28,13 +28,18 @@ class OwnerRequestEndpoint extends Endpoint {
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
+    session.log(
+      'OwnerRequestEndpoint: Existing request found: ${existingRequest?.id}, status: ${existingRequest?.status}',
+    );
 
     if (existingRequest != null &&
         (existingRequest.status == OwnerRequestStatus.pending ||
             existingRequest.status == OwnerRequestStatus.approved)) {
+      session.log('OwnerRequestEndpoint: Returning existing request');
       return existingRequest;
     }
 
+    session.log('OwnerRequestEndpoint: Inserting new request');
     final request = BecomeOwnerRequest(
       userId: user.id!,
       message: message,
@@ -43,19 +48,14 @@ class OwnerRequestEndpoint extends Endpoint {
       updatedAt: DateTime.now(),
     );
 
-    return await BecomeOwnerRequest.db.insertRow(session, request);
+    final inserted = await BecomeOwnerRequest.db.insertRow(session, request);
+    session.log('OwnerRequestEndpoint: Inserted request id: ${inserted.id}');
+    return inserted;
   }
 
   /// Get the current user's most recent owner request
   Future<BecomeOwnerRequest?> getMyRequest(Session session) async {
-    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
-    if (userInfoId == null) return null;
-
-    final user = await User.db.findFirstRow(
-      session,
-      where: (t) => t.userInfoId.equals(userInfoId),
-    );
-
+    final user = await UserUtils.getOrCreateUser(session);
     if (user == null) return null;
 
     return await BecomeOwnerRequest.db.findFirstRow(
@@ -68,14 +68,7 @@ class OwnerRequestEndpoint extends Endpoint {
 
   /// Get all requests (Admin only)
   Future<List<BecomeOwnerRequest>> getAllRequests(Session session) async {
-    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
-    if (userInfoId == null) return [];
-
-    final user = await User.db.findFirstRow(
-      session,
-      where: (t) => t.userInfoId.equals(userInfoId),
-    );
-
+    final user = await UserUtils.getOrCreateUser(session);
     if (user == null || user.role != UserRole.admin) return [];
 
     return await BecomeOwnerRequest.db.find(
@@ -92,14 +85,7 @@ class OwnerRequestEndpoint extends Endpoint {
     int requestId,
     OwnerRequestStatus status,
   ) async {
-    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
-    if (userInfoId == null) return false;
-
-    final adminUser = await User.db.findFirstRow(
-      session,
-      where: (t) => t.userInfoId.equals(userInfoId),
-    );
-
+    final adminUser = await UserUtils.getOrCreateUser(session);
     if (adminUser == null || adminUser.role != UserRole.admin) return false;
 
     final request = await BecomeOwnerRequest.db.findById(session, requestId);

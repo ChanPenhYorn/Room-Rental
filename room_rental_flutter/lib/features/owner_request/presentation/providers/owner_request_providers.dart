@@ -44,6 +44,30 @@ class OwnerRequestController extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
+
+  Future<bool> submitRequest({String? message}) async {
+    state = const AsyncLoading();
+    try {
+      print(
+        'OwnerRequestController: Submitting request with message: $message',
+      );
+      final result = await _repository.submitRequest(message: message);
+      print('OwnerRequestController: Result received: $result');
+      if (result != null) {
+        _ref.invalidate(myOwnerRequestProvider);
+        _ref.invalidate(allOwnerRequestsProvider);
+        state = const AsyncData(null);
+        return true;
+      }
+      print('OwnerRequestController: Request failed (result is null)');
+      state = const AsyncData(null);
+      return false;
+    } catch (e, st) {
+      print('OwnerRequestController: Error submitting request: $e');
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
 }
 
 final ownerRequestControllerProvider =

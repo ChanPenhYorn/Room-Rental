@@ -548,6 +548,21 @@ class EndpointRoom extends _i2.EndpointRef {
         {'roomId': roomId},
       );
 
+  /// Owner: Request an update to an existing room.
+  /// - If the room is already approved, changes are stored in `pendingData`.
+  /// - If the room is pending/rejected, changes are applied directly.
+  _i3.Future<bool> requestRoomUpdate(
+    int roomId,
+    _i11.Room updatedRoom,
+  ) => caller.callServerEndpoint<bool>(
+    'room',
+    'requestRoomUpdate',
+    {
+      'roomId': roomId,
+      'updatedRoom': updatedRoom,
+    },
+  );
+
   /// Owner/Admin: Delete a room (cascade-deletes all related records first)
   _i3.Future<bool> deleteRoom(int roomId) => caller.callServerEndpoint<bool>(
     'room',

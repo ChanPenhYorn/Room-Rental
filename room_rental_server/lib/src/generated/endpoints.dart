@@ -804,6 +804,31 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['roomId'],
                   ),
         ),
+        'requestRoomUpdate': _i1.MethodConnector(
+          name: 'requestRoomUpdate',
+          params: {
+            'roomId': _i1.ParameterDescription(
+              name: 'roomId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'updatedRoom': _i1.ParameterDescription(
+              name: 'updatedRoom',
+              type: _i1.getType<_i18.Room>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['room'] as _i10.RoomEndpoint).requestRoomUpdate(
+                    session,
+                    params['roomId'],
+                    params['updatedRoom'],
+                  ),
+        ),
         'deleteRoom': _i1.MethodConnector(
           name: 'deleteRoom',
           params: {

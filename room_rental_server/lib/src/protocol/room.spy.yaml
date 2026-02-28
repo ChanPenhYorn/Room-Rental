@@ -16,6 +16,8 @@ fields:
   createdAt: DateTime
   status: RoomStatus
   rejectionReason: String?
+  pendingData: String?
+  hasPendingEdit: bool, default=false
   facilities: List<RoomFacility>?, relation(name=room_facilities)
   bookings: List<Booking>?, relation(name=room_bookings)
   favorites: List<Favorite>?, relation

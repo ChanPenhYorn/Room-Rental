@@ -160,6 +160,25 @@ class RoomController extends _$RoomController {
       return false;
     }
   }
+
+  Future<bool> requestRoomUpdate(int roomId, Room updatedRoom) async {
+    state = const AsyncValue.loading();
+    try {
+      final repository = ref.read(roomRepositoryProvider);
+      final result = await repository.requestRoomUpdate(roomId, updatedRoom);
+      if (result) {
+        // Refresh lists that might show the "pending edit" state
+        ref.invalidate(myRoomsProvider);
+        ref.invalidate(adminRoomsProvider);
+        ref.invalidate(pendingRoomsProvider);
+      }
+      state = const AsyncValue.data(null);
+      return result;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
 }
 
 extension RoomTypeX on RoomType {

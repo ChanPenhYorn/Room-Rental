@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import 'package:room_rental_flutter/features/listings/domain/entities/room_entit
 import 'package:room_rental_flutter/features/owner_request/presentation/providers/owner_request_providers.dart';
 import 'package:room_rental_flutter/features/admin/presentation/providers/user_providers.dart';
 import 'package:room_rental_flutter/features/auth/presentation/providers/auth_providers.dart';
+import 'package:room_rental_flutter/features/listings/presentation/screens/room_detail_screen.dart';
 import 'package:intl/intl.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
@@ -372,6 +374,7 @@ class _RoomManagementCard extends ConsumerWidget {
                 child: _StatusBadge(
                   status: room.status,
                   isAvailable: room.isAvailable,
+                  hasPendingEdit: room.hasPendingEdit,
                 ),
               ),
             ],
@@ -483,6 +486,19 @@ class _ActionRow extends ConsumerWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
+        _ActionButton(
+          icon: Icons.info_outline,
+          label: 'View Details',
+          color: AppTheme.secondaryGray,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RoomDetailScreen(room: room),
+              ),
+            );
+          },
+        ),
         if (tabType == _ListTabType.pending) ...[
           _ActionButton(
             icon: Icons.check_circle_outline,
@@ -513,6 +529,13 @@ class _ActionRow extends ConsumerWidget {
             onTap: () => _confirmDelete(context, ref),
           ),
         ],
+        if (room.hasPendingEdit)
+          _ActionButton(
+            icon: Icons.edit_note_outlined,
+            label: 'Review Edits',
+            color: Colors.blue.shade800,
+            onTap: () => _showReviewEditsDialog(context, ref),
+          ),
       ],
     );
   }
@@ -677,6 +700,140 @@ class _ActionRow extends ConsumerWidget {
       ),
     );
   }
+
+  void _showReviewEditsDialog(BuildContext context, WidgetRef ref) {
+    if (room.pendingData == null) return;
+
+    try {
+      final pendingMap = jsonDecode(room.pendingData!) as Map<String, dynamic>;
+
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Review Proposed Edits',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'The owner has proposed changes to this approved listing. Compare them below:',
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      color: AppTheme.secondaryGray,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDiffItem('Title', room.title, pendingMap['title']),
+                  _buildDiffItem(
+                    'Description',
+                    room.description,
+                    pendingMap['description'],
+                  ),
+                  _buildDiffItem(
+                    'Price',
+                    '\$${room.price.toStringAsFixed(2)}',
+                    pendingMap.containsKey('price')
+                        ? '\$${(pendingMap['price'] as num).toDouble().toStringAsFixed(2)}'
+                        : null,
+                  ),
+                  _buildDiffItem(
+                    'Location',
+                    room.location,
+                    pendingMap['location'],
+                  ),
+                  _buildDiffItem('Type', room.type.uiLabel, pendingMap['type']),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Later',
+                style: GoogleFonts.outfit(color: AppTheme.secondaryGray),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _updateStatus(context, ref, RoomStatus.approved);
+              },
+              child: Text(
+                'Approve & Apply',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      _showSnack(context, 'Error decoding edits: $e', Colors.red);
+    }
+  }
+
+  Widget _buildDiffItem(String label, String current, dynamic proposed) {
+    final proposedStr = proposed?.toString();
+    final isDifferent = proposedStr != null && proposedStr != current;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            current,
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: isDifferent ? Colors.red : Colors.black87,
+            ),
+          ),
+          if (isDifferent) ...[
+            const Icon(
+              Icons.arrow_downward,
+              size: 14,
+              color: AppTheme.primaryGreen,
+            ),
+            Text(
+              proposedStr,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryGreen,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------
@@ -767,12 +924,33 @@ class _OwnerRequestCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              Text(
-                'ID: ${request.userId}',
-                style: GoogleFonts.outfit(
-                  color: Colors.grey.shade400,
-                  fontSize: 12,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'ID: ${request.userId}',
+                    style: GoogleFonts.outfit(
+                      color: Colors.grey.shade400,
+                      fontSize: 12,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _showUserInfoDialog(context, request.user),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'View Info',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: AppTheme.primaryGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -786,7 +964,7 @@ class _OwnerRequestCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '"${request.message!}"',
+                '"${request.message}"',
                 style: GoogleFonts.outfit(
                   fontStyle: FontStyle.italic,
                   color: Colors.black87,
@@ -857,6 +1035,105 @@ class _OwnerRequestCard extends ConsumerWidget {
         ),
       );
     }
+  }
+
+  void _showUserInfoDialog(BuildContext context, User? user) {
+    if (user == null) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundImage: user.profileImage != null
+                  ? NetworkImage(user.profileImage!)
+                  : null,
+              child: user.profileImage == null
+                  ? const Icon(Icons.person)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'User Details',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow('Full Name', user.fullName),
+            _buildDetailRow('Email', user.userInfo?.email ?? 'N/A'),
+            _buildDetailRow('Phone', user.phone ?? 'Not provided'),
+            _buildDetailRow('Role', user.role.name.toUpperCase()),
+            _buildDetailRow(
+              'Member Since',
+              DateFormat('MMM dd, yyyy').format(user.createdAt),
+            ),
+            if (user.bio != null && user.bio!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Bio',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                user.bio!,
+                style: GoogleFonts.outfit(fontSize: 14),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Close',
+              style: GoogleFonts.outfit(
+                color: AppTheme.primaryGreen,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              color: AppTheme.primaryBlack,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1266,8 +1543,13 @@ class _StatCard extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   final RoomStatus status;
   final bool isAvailable;
+  final bool hasPendingEdit;
 
-  const _StatusBadge({required this.status, required this.isAvailable});
+  const _StatusBadge({
+    required this.status,
+    required this.isAvailable,
+    this.hasPendingEdit = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1293,27 +1575,57 @@ class _StatusBadge extends StatelessWidget {
       icon = Icons.check_circle_rounded;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: Colors.white),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (hasPendingEdit) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade600,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.edit_note, size: 12, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(
+                  'Edit Pending',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 }

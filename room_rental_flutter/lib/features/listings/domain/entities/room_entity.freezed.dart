@@ -37,6 +37,8 @@ mixin _$RoomEntity {
   RoomStatus get status => throw _privateConstructorUsedError;
   String? get ownerName => throw _privateConstructorUsedError;
   String? get rejectionReason => throw _privateConstructorUsedError;
+  bool get hasPendingEdit => throw _privateConstructorUsedError;
+  String? get pendingData => throw _privateConstructorUsedError;
 
   /// Serializes this RoomEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -72,6 +74,8 @@ abstract class $RoomEntityCopyWith<$Res> {
     RoomStatus status,
     String? ownerName,
     String? rejectionReason,
+    bool hasPendingEdit,
+    String? pendingData,
   });
 }
 
@@ -106,6 +110,8 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
     Object? status = null,
     Object? ownerName = freezed,
     Object? rejectionReason = freezed,
+    Object? hasPendingEdit = null,
+    Object? pendingData = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -173,6 +179,14 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
                 ? _value.rejectionReason
                 : rejectionReason // ignore: cast_nullable_to_non_nullable
                       as String?,
+            hasPendingEdit: null == hasPendingEdit
+                ? _value.hasPendingEdit
+                : hasPendingEdit // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            pendingData: freezed == pendingData
+                ? _value.pendingData
+                : pendingData // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -205,6 +219,8 @@ abstract class _$$RoomEntityImplCopyWith<$Res>
     RoomStatus status,
     String? ownerName,
     String? rejectionReason,
+    bool hasPendingEdit,
+    String? pendingData,
   });
 }
 
@@ -238,6 +254,8 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
     Object? status = null,
     Object? ownerName = freezed,
     Object? rejectionReason = freezed,
+    Object? hasPendingEdit = null,
+    Object? pendingData = freezed,
   }) {
     return _then(
       _$RoomEntityImpl(
@@ -305,6 +323,14 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
             ? _value.rejectionReason
             : rejectionReason // ignore: cast_nullable_to_non_nullable
                   as String?,
+        hasPendingEdit: null == hasPendingEdit
+            ? _value.hasPendingEdit
+            : hasPendingEdit // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        pendingData: freezed == pendingData
+            ? _value.pendingData
+            : pendingData // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -330,6 +356,8 @@ class _$RoomEntityImpl implements _RoomEntity {
     this.status = RoomStatus.pending,
     this.ownerName,
     this.rejectionReason,
+    this.hasPendingEdit = false,
+    this.pendingData,
   }) : _images = images,
        _facilities = facilities;
 
@@ -381,10 +409,15 @@ class _$RoomEntityImpl implements _RoomEntity {
   final String? ownerName;
   @override
   final String? rejectionReason;
+  @override
+  @JsonKey()
+  final bool hasPendingEdit;
+  @override
+  final String? pendingData;
 
   @override
   String toString() {
-    return 'RoomEntity(id: $id, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities, status: $status, ownerName: $ownerName, rejectionReason: $rejectionReason)';
+    return 'RoomEntity(id: $id, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities, status: $status, ownerName: $ownerName, rejectionReason: $rejectionReason, hasPendingEdit: $hasPendingEdit, pendingData: $pendingData)';
   }
 
   @override
@@ -418,7 +451,11 @@ class _$RoomEntityImpl implements _RoomEntity {
             (identical(other.ownerName, ownerName) ||
                 other.ownerName == ownerName) &&
             (identical(other.rejectionReason, rejectionReason) ||
-                other.rejectionReason == rejectionReason));
+                other.rejectionReason == rejectionReason) &&
+            (identical(other.hasPendingEdit, hasPendingEdit) ||
+                other.hasPendingEdit == hasPendingEdit) &&
+            (identical(other.pendingData, pendingData) ||
+                other.pendingData == pendingData));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -441,6 +478,8 @@ class _$RoomEntityImpl implements _RoomEntity {
     status,
     ownerName,
     rejectionReason,
+    hasPendingEdit,
+    pendingData,
   );
 
   /// Create a copy of RoomEntity
@@ -475,6 +514,8 @@ abstract class _RoomEntity implements RoomEntity {
     final RoomStatus status,
     final String? ownerName,
     final String? rejectionReason,
+    final bool hasPendingEdit,
+    final String? pendingData,
   }) = _$RoomEntityImpl;
 
   factory _RoomEntity.fromJson(Map<String, dynamic> json) =
@@ -512,6 +553,10 @@ abstract class _RoomEntity implements RoomEntity {
   String? get ownerName;
   @override
   String? get rejectionReason;
+  @override
+  bool get hasPendingEdit;
+  @override
+  String? get pendingData;
 
   /// Create a copy of RoomEntity
   /// with the given fields replaced by the non-null parameter values.

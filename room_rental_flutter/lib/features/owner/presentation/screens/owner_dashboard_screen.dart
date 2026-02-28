@@ -6,6 +6,7 @@ import 'package:room_rental_client/room_rental_client.dart';
 import 'package:room_rental_flutter/core/theme/app_theme.dart';
 import 'package:room_rental_flutter/features/listings/presentation/providers/room_provider.dart';
 import 'package:room_rental_flutter/features/listings/domain/entities/room_entity.dart';
+import 'package:room_rental_flutter/features/property_management/presentation/screens/edit_room_screen.dart';
 
 class OwnerDashboardScreen extends ConsumerStatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -332,6 +333,7 @@ class _RoomManagementCard extends ConsumerWidget {
                 child: _StatusBadge(
                   status: room.status,
                   isAvailable: room.isAvailable,
+                  hasPendingEdit: room.hasPendingEdit,
                 ),
               ),
             ],
@@ -454,6 +456,20 @@ class _ActionRow extends ConsumerWidget {
             label: 'Delete',
             color: Colors.red.shade400,
             onTap: () => _confirmDelete(context, ref, room.id),
+          ),
+        if (!isAdmin)
+          _ActionButton(
+            icon: Icons.edit_outlined,
+            label: 'Edit',
+            color: Colors.blue.shade700,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EditRoomScreen(room: room),
+                ),
+              );
+            },
           ),
       ],
     );
@@ -590,8 +606,13 @@ class _ActionButton extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   final RoomStatus status;
   final bool isAvailable;
+  final bool hasPendingEdit;
 
-  const _StatusBadge({required this.status, required this.isAvailable});
+  const _StatusBadge({
+    required this.status,
+    required this.isAvailable,
+    this.hasPendingEdit = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -617,27 +638,57 @@ class _StatusBadge extends StatelessWidget {
       icon = Icons.check_circle_rounded;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: Colors.white),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (hasPendingEdit) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade600,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.edit_note, size: 12, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(
+                  'Edit Pending',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 }
