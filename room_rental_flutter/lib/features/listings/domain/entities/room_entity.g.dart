@@ -25,6 +25,11 @@ _$RoomEntityImpl _$$RoomEntityImplFromJson(Map<String, dynamic> json) =>
       facilities: (json['facilities'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      status:
+          $enumDecodeNullable(_$RoomStatusEnumMap, json['status']) ??
+          RoomStatus.pending,
+      ownerName: json['ownerName'] as String?,
+      rejectionReason: json['rejectionReason'] as String?,
     );
 
 Map<String, dynamic> _$$RoomEntityImplToJson(_$RoomEntityImpl instance) =>
@@ -42,6 +47,9 @@ Map<String, dynamic> _$$RoomEntityImplToJson(_$RoomEntityImpl instance) =>
       'rating': instance.rating,
       'type': instance.type,
       'facilities': instance.facilities,
+      'status': instance.status,
+      'ownerName': instance.ownerName,
+      'rejectionReason': instance.rejectionReason,
     };
 
 const _$RoomTypeEnumMap = {
@@ -52,4 +60,11 @@ const _$RoomTypeEnumMap = {
   RoomType.villa: 'villa',
   RoomType.house: 'house',
   RoomType.condo: 'condo',
+};
+
+const _$RoomStatusEnumMap = {
+  RoomStatus.pending: 'pending',
+  RoomStatus.approved: 'approved',
+  RoomStatus.rejected: 'rejected',
+  RoomStatus.archived: 'archived',
 };

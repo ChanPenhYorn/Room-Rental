@@ -2,3 +2,4 @@ enum: UserRole
 values:
   - tenant
   - owner
+  - admin

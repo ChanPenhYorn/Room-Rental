@@ -38,6 +38,7 @@ abstract class Room implements _i1.SerializableModel {
     required this.isAvailable,
     required this.createdAt,
     required this.status,
+    this.rejectionReason,
     this.facilities,
     this.bookings,
     this.favorites,
@@ -61,6 +62,7 @@ abstract class Room implements _i1.SerializableModel {
     required bool isAvailable,
     required DateTime createdAt,
     required _i4.RoomStatus status,
+    String? rejectionReason,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -93,6 +95,7 @@ abstract class Room implements _i1.SerializableModel {
         jsonSerialization['createdAt'],
       ),
       status: _i4.RoomStatus.fromJson((jsonSerialization['status'] as String)),
+      rejectionReason: jsonSerialization['rejectionReason'] as String?,
       facilities: jsonSerialization['facilities'] == null
           ? null
           : _i9.Protocol().deserialize<List<_i5.RoomFacility>>(
@@ -151,6 +154,8 @@ abstract class Room implements _i1.SerializableModel {
 
   _i4.RoomStatus status;
 
+  String? rejectionReason;
+
   List<_i5.RoomFacility>? facilities;
 
   List<_i6.Booking>? bookings;
@@ -179,6 +184,7 @@ abstract class Room implements _i1.SerializableModel {
     bool? isAvailable,
     DateTime? createdAt,
     _i4.RoomStatus? status,
+    String? rejectionReason,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -204,6 +210,7 @@ abstract class Room implements _i1.SerializableModel {
       'isAvailable': isAvailable,
       'createdAt': createdAt.toJson(),
       'status': status.toJson(),
+      if (rejectionReason != null) 'rejectionReason': rejectionReason,
       if (facilities != null)
         'facilities': facilities?.toJson(valueToJson: (v) => v.toJson()),
       if (bookings != null)
@@ -241,6 +248,7 @@ class _RoomImpl extends Room {
     required bool isAvailable,
     required DateTime createdAt,
     required _i4.RoomStatus status,
+    String? rejectionReason,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -262,6 +270,7 @@ class _RoomImpl extends Room {
          isAvailable: isAvailable,
          createdAt: createdAt,
          status: status,
+         rejectionReason: rejectionReason,
          facilities: facilities,
          bookings: bookings,
          favorites: favorites,
@@ -289,6 +298,7 @@ class _RoomImpl extends Room {
     bool? isAvailable,
     DateTime? createdAt,
     _i4.RoomStatus? status,
+    Object? rejectionReason = _Undefined,
     Object? facilities = _Undefined,
     Object? bookings = _Undefined,
     Object? favorites = _Undefined,
@@ -313,6 +323,9 @@ class _RoomImpl extends Room {
       isAvailable: isAvailable ?? this.isAvailable,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      rejectionReason: rejectionReason is String?
+          ? rejectionReason
+          : this.rejectionReason,
       facilities: facilities is List<_i5.RoomFacility>?
           ? facilities
           : this.facilities?.map((e0) => e0.copyWith()).toList(),

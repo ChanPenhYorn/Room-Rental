@@ -280,8 +280,13 @@ class PaymentSuccessScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to My Activities
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    // Navigate to My Activities (Index 2 in HomeScreen)
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const HomeScreen(initialIndex: 2),
+                      ),
+                      (route) => false,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,

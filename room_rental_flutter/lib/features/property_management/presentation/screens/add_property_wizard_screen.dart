@@ -1,18 +1,26 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:room_rental_client/room_rental_client.dart';
+import 'package:room_rental_flutter/core/network/api_client_provider.dart';
+import 'package:room_rental_flutter/features/listings/presentation/screens/home_screen.dart';
+import 'package:room_rental_flutter/features/listings/presentation/providers/room_provider.dart';
 import 'package:room_rental_flutter/core/theme/app_theme.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Add Property Wizard Screen
 /// A multi-step form for adding a new property listing
-class AddPropertyWizardScreen extends StatefulWidget {
+class AddPropertyWizardScreen extends ConsumerStatefulWidget {
   const AddPropertyWizardScreen({super.key});
 
   @override
-  State<AddPropertyWizardScreen> createState() =>
+  ConsumerState<AddPropertyWizardScreen> createState() =>
       _AddPropertyWizardScreenState();
 }
 
-class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
+class _AddPropertyWizardScreenState
+    extends ConsumerState<AddPropertyWizardScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
   final int _totalSteps = 5;
@@ -25,7 +33,66 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
   final _depositController = TextEditingController();
   String _propertyType = 'Apartment';
   final List<String> _selectedFacilities = [];
-  final List<String> _uploadedImages = []; // Mock images
+  final List<String> _uploadedImages = [];
+
+  // Static Photos for testing
+  final List<String> _staticPhotos = [
+    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&q=80',
+    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&q=80',
+    'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=500&q=80',
+    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80',
+    'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=500&q=80',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _autoFillForTesting();
+  }
+
+  void _autoFillForTesting() {
+    _titleController.text = 'Cozy Modern Apartment';
+    _descriptionController.text =
+        'A beautiful studio apartment located in the heart of the city. Close to public transport and amenities.';
+    _addressController.text = '123 Main St, Downtown';
+    _priceController.text = '450.00';
+    _depositController.text = '900.00';
+    _propertyType = 'Apartment';
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final List<XFile> images = await picker.pickMultiImage();
+      if (images.isNotEmpty) {
+        setState(() {
+          _uploadedImages.addAll(images.map((image) => image.path));
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking images: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildImageProvider(String path) {
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return Image.network(path, fit: BoxFit.cover);
+    } else {
+      return Image.file(File(path), fit: BoxFit.cover);
+    }
+  }
+
+  ImageProvider _getImageProvider(String path) {
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return NetworkImage(path);
+    } else {
+      return FileImage(File(path));
+    }
+  }
 
   @override
   void dispose() {
@@ -67,7 +134,7 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
     }
   }
 
-  void _submitProperty() {
+  Future<void> _submitProperty() async {
     // Show loading
     showDialog(
       context: context,
@@ -77,18 +144,79 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
       ),
     );
 
-    // Simulate API call
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context); // Close loading
+    try {
+      final client = ref.read(clientProvider);
 
-      // Show Success Screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const PropertySuccessScreen(),
-        ),
+      final room = Room(
+        ownerId: 0, // Server will overwrite with authenticated user's ID
+        title: _titleController.text,
+        description: _descriptionController.text,
+        price: double.tryParse(_priceController.text) ?? 0.0,
+        location: _addressController.text,
+        latitude: 11.5564, // Default Phnom Penh for demo
+        longitude: 104.9282,
+        rating: 4.5,
+        type: _mapPropertyType(_propertyType),
+        imageUrl: _uploadedImages.isNotEmpty ? _uploadedImages.first : null,
+        images: _uploadedImages,
+        isAvailable: true,
+        createdAt: DateTime.now(),
+        status: RoomStatus.pending,
       );
-    });
+
+      final result = await client.room.createRoom(room);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+
+        if (result != null) {
+          // Refresh all listing caches so the dashboard shows the new pending room
+          ref.invalidate(roomListProvider);
+          ref.invalidate(pendingRoomsProvider);
+          ref.invalidate(myRoomsProvider);
+
+          // Show Success Screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PropertySuccessScreen(room: result),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Submission failed. Please try again.',
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  RoomType _mapPropertyType(String type) {
+    switch (type.toLowerCase()) {
+      case 'apartment':
+        return RoomType.apartment1br;
+      case 'house':
+        return RoomType.house;
+      case 'villa':
+        return RoomType.villa;
+      case 'condo':
+        return RoomType.condo;
+      case 'dormitory':
+        return RoomType.dormitory;
+      default:
+        return RoomType.apartment1br;
+    }
   }
 
   @override
@@ -257,7 +385,7 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: AppTheme.dividerGray.withOpacity(0.3),
+                  color: AppTheme.dividerGray.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.dividerGray),
                 ),
@@ -320,45 +448,103 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
           const SizedBox(height: 32),
 
           // Add Photo Button
-          InkWell(
-            onTap: () {
-              setState(() {
-                _uploadedImages.add('mock_image_${_uploadedImages.length + 1}');
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppTheme.primaryGreen,
-                  style: BorderStyle.solid,
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.add_a_photo,
-                    size: 48,
-                    color: AppTheme.primaryGreen,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Tap to upload photos',
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryGreen,
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: _pickImage,
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.primaryGreen,
+                        style: BorderStyle.solid,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.add_a_photo,
+                          size: 32,
+                          color: AppTheme.primaryGreen,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Upload Photo',
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryGreen,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      // Add a random static photo
+                      _uploadedImages.add(
+                        _staticPhotos[_uploadedImages.length %
+                            _staticPhotos.length],
+                      );
+                    });
+                  },
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.primaryGreen,
+                        style: BorderStyle.solid,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.collections,
+                          size: 32,
+                          color: AppTheme.primaryGreen,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add Static Photo',
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          Text(
+            'Selected Photos',
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primaryBlack,
             ),
           ),
+          const SizedBox(height: 12),
 
           const SizedBox(height: 24),
 
@@ -381,10 +567,10 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(12),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://picsum.photos/300/300'),
-                          fit: BoxFit.cover,
-                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: _buildImageProvider(_uploadedImages[index]),
                       ),
                     ),
                     Positioned(
@@ -621,12 +807,20 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
           // Image
           Container(
             height: 200,
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              image: DecorationImage(
-                image: NetworkImage('https://picsum.photos/400/300'),
-                fit: BoxFit.cover,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
               ),
+              image: _uploadedImages.isNotEmpty
+                  ? DecorationImage(
+                      image: _getImageProvider(_uploadedImages.first),
+                      fit: BoxFit.cover,
+                    )
+                  : const DecorationImage(
+                      image: NetworkImage('https://picsum.photos/400/300'),
+                      fit: BoxFit.cover,
+                    ),
             ),
           ),
 
@@ -786,68 +980,266 @@ class _AddPropertyWizardScreenState extends State<AddPropertyWizardScreen> {
 }
 
 class PropertySuccessScreen extends StatelessWidget {
-  const PropertySuccessScreen({super.key});
+  final Room room;
+  const PropertySuccessScreen({super.key, required this.room});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
+      backgroundColor: AppTheme.surfaceWhite,
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check,
-                  size: 60,
-                  color: Colors.white,
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+
+                      // Success Animation/Icon
+                      TweenAnimationBuilder(
+                        tween: Tween<double>(begin: 0, end: 1),
+                        duration: const Duration(seconds: 1),
+                        curve: Curves.elasticOut,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: value,
+                            child: Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreen.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryGreen.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    blurRadius: 20 * value,
+                                    spreadRadius: 5 * value,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.check_circle,
+                                size: 80,
+                                color: AppTheme.primaryGreen,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Success Message
+                      Text(
+                        'Submission Received!',
+                        style: GoogleFonts.outfit(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryBlack,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Your property is waiting for approval',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          color: AppTheme.secondaryGray,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Listing Summary Card
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 30,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            // Header with Status
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'LISTING ID',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
+                                        color: AppTheme.secondaryGray,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'PR${room.id}',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.primaryBlack,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'PENDING',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Dotted Line
+                            _buildDottedLine(),
+
+                            const SizedBox(height: 24),
+
+                            // Room Info Summary
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        room.title,
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.primaryBlack,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        room.location,
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12,
+                                          color: AppTheme.secondaryGray,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '\$${room.price.toStringAsFixed(0)}',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Details
+                            _buildSummaryRow(
+                              'Property Type',
+                              room.type.name.toUpperCase(),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSummaryRow(
+                              'Submitted On',
+                              '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSummaryRow('Moderation', 'Under Review'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Info Tip
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.timer_outlined,
+                              color: AppTheme.primaryGreen,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Your listing will be reviewed by an admin within 24 hours. You will be notified once it is approved.',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 13,
+                                  color: AppTheme.primaryBlack.withOpacity(0.7),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
-              Text(
-                'Listing Published!',
-                style: GoogleFonts.outfit(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryBlack,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Your property has been successfully listed and is now visible to thousands of potential tenants.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
-                  fontSize: 16,
-                  color: AppTheme.secondaryGray,
-                ),
-              ),
-              const SizedBox(height: 40),
+
+              // Buttons
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // Go back to where we started
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const HomeScreen(initialIndex: 0),
+                      ),
+                      (route) => false,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                   child: Text(
-                    'Back to Dashboard',
+                    'Back to Home',
                     style: GoogleFonts.outfit(
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -857,6 +1249,44 @@ class PropertySuccessScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDottedLine() {
+    return Row(
+      children: List.generate(
+        30,
+        (index) => Expanded(
+          child: Container(
+            color: index % 2 == 0 ? Colors.transparent : AppTheme.dividerGray,
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            color: AppTheme.secondaryGray,
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryBlack,
+          ),
+        ),
+      ],
     );
   }
 }

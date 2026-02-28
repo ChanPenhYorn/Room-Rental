@@ -23,6 +23,11 @@ favorite:
   - toggleFavorite:
   - getFavoriteRoomIds:
   - getUserFavorites:
+ownerRequest:
+  - submitRequest:
+  - getMyRequest:
+  - getAllRequests:
+  - updateRequestStatus:
 payment:
   - createAbaPaymentRequest:
   - verifyAbaTransaction:
@@ -32,7 +37,17 @@ room:
   - searchRooms:
   - filterRooms:
   - createRoom:
+  - getMyRooms:
+  - getAllRoomsAsAdmin:
+  - getPendingRooms:
+  - updateRoomStatus:
+  - toggleRoomAvailability:
+  - deleteRoom:
 seed:
   - seedData:
+user:
+  - getAllUsers:
+  - updateUserRole:
+  - getUserStats:
 greeting:
   - hello:

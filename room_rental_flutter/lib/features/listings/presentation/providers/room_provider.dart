@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:room_rental_client/room_rental_client.dart';
 import '../../../../core/network/api_client_provider.dart';
 import '../../data/repositories/room_repository_impl.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/room_entity.dart';
 import '../../domain/repositories/room_repository.dart';
 
@@ -43,32 +44,22 @@ Future<List<RoomEntity>> roomList(RoomListRef ref) async {
   final rooms = await repository.getRooms();
 
   return rooms.where((room) {
-    // Category Filter (Tab Bar)
     if (selectedCategory != 'All' && room.type.uiLabel != selectedCategory) {
       return false;
     }
-
-    // Price Filter (Filter Modal)
     if (room.price < filter.minPrice || room.price > filter.maxPrice) {
       return false;
     }
-
-    // Property Types Filter (If selected in Modal)
     if (filter.propertyTypes.isNotEmpty &&
         !filter.propertyTypes.contains(room.type.uiLabel)) {
       return false;
     }
-
-    // Rating Filter
     if (filter.minRating != null && room.rating < filter.minRating!) {
       return false;
     }
-
-    // Amenities Filter
     if (filter.amenities.isNotEmpty) {
       bool hasAllAmenities = true;
       for (final requiredAmenity in filter.amenities) {
-        // Simple string match check for demo
         if (!room.facilities.any((f) => f.contains(requiredAmenity))) {
           hasAllAmenities = false;
           break;
@@ -76,9 +67,99 @@ Future<List<RoomEntity>> roomList(RoomListRef ref) async {
       }
       if (!hasAllAmenities) return false;
     }
-
     return true;
   }).toList();
+}
+
+@riverpod
+Future<List<RoomEntity>> pendingRooms(PendingRoomsRef ref) async {
+  ref.watch(authStateProvider);
+  final repository = ref.watch(roomRepositoryProvider);
+  return await repository.getPendingRooms();
+}
+
+@riverpod
+Future<List<RoomEntity>> myRooms(MyRoomsRef ref) async {
+  ref.watch(authStateProvider);
+  final repository = ref.watch(roomRepositoryProvider);
+  return await repository.getMyRooms();
+}
+
+@riverpod
+Future<List<RoomEntity>> adminRooms(AdminRoomsRef ref) async {
+  ref.watch(authStateProvider);
+  final repository = ref.watch(roomRepositoryProvider);
+  return await repository.getAllRoomsAsAdmin();
+}
+
+@riverpod
+class RoomController extends _$RoomController {
+  @override
+  AsyncValue<void> build() => const AsyncValue.data(null);
+
+  Future<bool> updateRoomStatus(
+    int roomId,
+    RoomStatus status, {
+    String? rejectionReason,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final repository = ref.read(roomRepositoryProvider);
+      final result = await repository.updateRoomStatus(
+        roomId,
+        status,
+        rejectionReason: rejectionReason,
+      );
+      if (result) {
+        ref.invalidate(roomListProvider);
+        ref.invalidate(pendingRoomsProvider);
+        ref.invalidate(myRoomsProvider);
+        ref.invalidate(adminRoomsProvider);
+      }
+      state = const AsyncValue.data(null);
+      return result;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> toggleAvailability(int roomId) async {
+    state = const AsyncValue.loading();
+    try {
+      final repository = ref.read(roomRepositoryProvider);
+      final result = await repository.toggleRoomAvailability(roomId);
+      if (result) {
+        ref.invalidate(roomListProvider);
+        ref.invalidate(myRoomsProvider);
+        ref.invalidate(adminRoomsProvider);
+      }
+      state = const AsyncValue.data(null);
+      return result;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> deleteRoom(int roomId) async {
+    state = const AsyncValue.loading();
+    try {
+      final repository = ref.read(roomRepositoryProvider);
+      final result = await repository.deleteRoom(roomId);
+      if (result) {
+        ref.invalidate(roomListProvider);
+        ref.invalidate(pendingRoomsProvider);
+        ref.invalidate(myRoomsProvider);
+        ref.invalidate(adminRoomsProvider);
+      }
+      state = const AsyncValue.data(null);
+      return result;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
 }
 
 extension RoomTypeX on RoomType {

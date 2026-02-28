@@ -15,6 +15,7 @@ fields:
   isAvailable: bool
   createdAt: DateTime
   status: RoomStatus
+  rejectionReason: String?
   facilities: List<RoomFacility>?, relation(name=room_facilities)
   bookings: List<Booking>?, relation(name=room_bookings)
   favorites: List<Favorite>?, relation

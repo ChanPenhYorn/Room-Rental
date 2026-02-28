@@ -20,6 +20,9 @@ class RoomEntity with _$RoomEntity {
     required double rating,
     required RoomType type,
     required List<String> facilities,
+    @Default(RoomStatus.pending) RoomStatus status,
+    String? ownerName,
+    String? rejectionReason,
   }) = _RoomEntity;
 
   factory RoomEntity.fromJson(Map<String, dynamic> json) =>

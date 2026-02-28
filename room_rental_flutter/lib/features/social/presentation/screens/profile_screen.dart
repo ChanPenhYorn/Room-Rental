@@ -8,6 +8,8 @@ import 'package:room_rental_flutter/features/auth/presentation/providers/auth_pr
 import 'package:room_rental_flutter/features/auth/presentation/providers/auth_state.dart';
 import 'package:room_rental_flutter/features/property_management/presentation/screens/add_property_wizard_screen.dart';
 import 'package:room_rental_flutter/features/social/presentation/screens/personal_information_screen.dart';
+import 'package:room_rental_flutter/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:room_rental_flutter/features/owner/presentation/screens/owner_dashboard_screen.dart';
 
 /// Profile Screen
 /// Displays user profile details and settings
@@ -83,6 +85,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         );
                       },
                     ),
+                    if (_userProfile?.role == UserRole.admin ||
+                        _userProfile?.role == UserRole.owner) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Administration'),
+                      const SizedBox(height: 12),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.admin_panel_settings_outlined,
+                        title: _userProfile?.role == UserRole.admin
+                            ? 'Admin Dashboard'
+                            : 'Owner Dashboard',
+                        subtitle: 'Manage and review property listings',
+                        onTap: () {
+                          if (_userProfile?.role == UserRole.admin) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AdminDashboardScreen(),
+                              ),
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const OwnerDashboardScreen(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 24),
 
                     _buildSectionTitle('Account Settings'),
@@ -210,7 +243,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _userProfile?.profileImage ??
             userInfo.imageUrl ??
             'https://i.pravatar.cc/150?u=${userInfo.userIdentifier}';
-        final roleName = _userProfile?.role.name.toUpperCase() ?? 'TENANT';
+        final roleName = _isLoadingProfile
+            ? '...'
+            : (_userProfile?.role.name.toUpperCase() ?? 'TENANT');
 
         return Container(
           width: double.infinity,
@@ -451,7 +486,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         },
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          backgroundColor: Colors.red.withOpacity(0.1),
+          backgroundColor: Colors.red.withValues(alpha: 0.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

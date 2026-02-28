@@ -106,7 +106,11 @@ void _sendRegistrationCode(
   required Transaction? transaction,
 }) async {
   // Store code for dev access
-  print('DEV_MODE: Storing verification code for $email: $verificationCode');
+  print('*************************************************');
+  print('🚀 DEV_MODE: REGISTRATION OTP FOR $email');
+  print('🔑 CODE: $verificationCode');
+  print('*************************************************');
+
   TestUtils.verificationCodes[email] = verificationCode;
 
   session.log(

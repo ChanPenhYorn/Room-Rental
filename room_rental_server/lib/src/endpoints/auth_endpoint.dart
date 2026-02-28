@@ -5,6 +5,18 @@ import '../generated/protocol.dart';
 import '../utils/cloudinary_service.dart';
 import '../utils/user_utils.dart';
 
+/// Returns a comparable rank for user roles (higher = more privileged)
+int _roleRank(UserRole role) {
+  switch (role) {
+    case UserRole.admin:
+      return 3;
+    case UserRole.owner:
+      return 2;
+    case UserRole.tenant:
+      return 1;
+  }
+}
+
 class AuthEndpoint extends Endpoint {
   /// Create a new user profile after registration
   Future<User?> createProfile(Session session, User user) async {
@@ -39,25 +51,94 @@ class AuthEndpoint extends Endpoint {
         'getMyProfile: Loading profile. userInfoId: $userInfoId, identifier: $userIdentifier',
       );
 
-      // Find user record - be very careful with duplicates
-      // Try to find by userInfoId first (highest priority)
+      // Find ALL user records matching this identity (by userInfoId OR authUserId)
+      // This handles the de-duplication case where duplicates were created
       User? user;
+      final List<User> matchingUsers = [];
+
       if (userInfoId != null) {
-        user = await User.db.findFirstRow(
+        final byInfoId = await User.db.find(
           session,
           where: (t) => t.userInfoId.equals(userInfoId),
           include: User.include(userInfo: UserInfo.include()),
         );
+        matchingUsers.addAll(byInfoId);
       }
 
-      // If not found by ID, try finding by UUID identifier
-      user ??= await User.db.findFirstRow(
+      // Also search by authUserId to catch unlinked records
+      final byAuthId = await User.db.find(
         session,
         where: (t) => t.authUserId.equals(userIdentifier),
         include: User.include(userInfo: UserInfo.include()),
       );
+      for (final u in byAuthId) {
+        if (!matchingUsers.any((m) => m.id == u.id)) {
+          matchingUsers.add(u);
+        }
+      }
 
-      // Auto-create if totally missing
+      // EMAIL FALLBACK: ALWAYS run this to catch cases where a higher-role
+      // record (e.g. owner) is linked via email but a stale tenant record
+      // was already found via authUserId. Merging all records ensures the
+      // highest role always wins.
+      try {
+        final emailResult = await session.db.unsafeSimpleQuery(
+          '''SELECT email FROM serverpod_auth_core_profile
+             WHERE "authUserId" = '$userIdentifier'
+             LIMIT 1''',
+        );
+        if (emailResult.isNotEmpty) {
+          final email = emailResult.first[0] as String;
+          final userInfoByEmail = await UserInfo.db.findFirstRow(
+            session,
+            where: (t) => t.email.equals(email),
+          );
+          if (userInfoByEmail?.id != null) {
+            final byEmail = await User.db.find(
+              session,
+              where: (t) => t.userInfoId.equals(userInfoByEmail!.id!),
+              include: User.include(userInfo: UserInfo.include()),
+            );
+            for (final u in byEmail) {
+              if (!matchingUsers.any((m) => m.id == u.id)) {
+                matchingUsers.add(u);
+                session.log(
+                  'getMyProfile: Email fallback added record id=${u.id} role=${u.role.name}',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        session.log(
+          'getMyProfile: Email fallback error: $e',
+          level: LogLevel.warning,
+        );
+      }
+
+      if (matchingUsers.isNotEmpty) {
+        // Prefer the record with the highest role (owner/admin over tenant)
+        matchingUsers.sort(
+          (a, b) => _roleRank(b.role).compareTo(_roleRank(a.role)),
+        );
+        user = matchingUsers.first;
+        if (matchingUsers.length > 1) {
+          session.log(
+            'getMyProfile: Found ${matchingUsers.length} records, using id=${user.id} with role=${user.role.name}',
+          );
+        }
+
+        // Auto-patch authUserId if it's missing — so future lookups are fast
+        if (user.authUserId == null || user.authUserId!.isEmpty) {
+          session.log(
+            'getMyProfile: Patching authUserId=${userIdentifier} on user id=${user.id}',
+          );
+          user.authUserId = userIdentifier;
+          user = await User.db.updateRow(session, user);
+        }
+      }
+
+      // Auto-create only if truly no record exists
       if (user == null) {
         session.log('getMyProfile: Creating fresh profile');
         user = User(

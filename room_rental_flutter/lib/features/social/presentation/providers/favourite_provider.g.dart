@@ -6,7 +6,7 @@ part of 'favourite_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$favouriteRoomsHash() => r'634047a59c61d13423a814327b4f8c59a6491cb9';
+String _$favouriteRoomsHash() => r'323dfeb39718671d867e229bd21588c7bf42a4c3';
 
 /// Provider that manages user's favorite rooms with server persistence.
 ///

@@ -24,7 +24,7 @@ final bookingRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef BookingRepositoryRef = AutoDisposeProviderRef<BookingRepository>;
-String _$myBookingsHash() => r'34b662d9f2c6386a8b751bd87d31a9d48ba7ce59';
+String _$myBookingsHash() => r'5934aceb94ea5b6963f378c1ed335ba8bb5d96ef';
 
 /// See also [myBookings].
 @ProviderFor(myBookings)

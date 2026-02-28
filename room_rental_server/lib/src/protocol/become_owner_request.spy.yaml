@@ -1,0 +1,9 @@
+class: BecomeOwnerRequest
+table: become_owner_request
+fields:
+  userId: int
+  user: User?, relation(field=userId)
+  message: String?
+  status: OwnerRequestStatus
+  createdAt: DateTime
+  updatedAt: DateTime

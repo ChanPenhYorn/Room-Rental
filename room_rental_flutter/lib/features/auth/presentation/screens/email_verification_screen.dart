@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:room_rental_client/room_rental_client.dart';
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart';
 import 'login_screen.dart';
@@ -25,6 +26,31 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   final _codeController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) {
+      _fetchCodeForDev();
+    }
+  }
+
+  Future<void> _fetchCodeForDev() async {
+    // Wait a bit for the server to process the request
+    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final client = Client('http://127.0.0.1:9080/');
+      final code = await client.dev.getRegistrationCode(widget.email);
+      if (code != null) {
+        debugPrint('*************************************************');
+        debugPrint('🚀 DEV_MODE: REGISTRATION OTP FOR ${widget.email}');
+        debugPrint('🔑 CODE: $code');
+        debugPrint('*************************************************');
+      }
+    } catch (e) {
+      debugPrint('DEV_MODE: Failed to fetch OTP: $e');
+    }
+  }
 
   @override
   void dispose() {

@@ -1,0 +1,5 @@
+enum: OwnerRequestStatus
+values:
+  - pending
+  - approved
+  - rejected

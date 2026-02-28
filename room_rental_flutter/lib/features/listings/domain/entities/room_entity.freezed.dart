@@ -34,6 +34,9 @@ mixin _$RoomEntity {
   double get rating => throw _privateConstructorUsedError;
   RoomType get type => throw _privateConstructorUsedError;
   List<String> get facilities => throw _privateConstructorUsedError;
+  RoomStatus get status => throw _privateConstructorUsedError;
+  String? get ownerName => throw _privateConstructorUsedError;
+  String? get rejectionReason => throw _privateConstructorUsedError;
 
   /// Serializes this RoomEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -66,6 +69,9 @@ abstract class $RoomEntityCopyWith<$Res> {
     double rating,
     RoomType type,
     List<String> facilities,
+    RoomStatus status,
+    String? ownerName,
+    String? rejectionReason,
   });
 }
 
@@ -97,6 +103,9 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
     Object? rating = null,
     Object? type = null,
     Object? facilities = null,
+    Object? status = null,
+    Object? ownerName = freezed,
+    Object? rejectionReason = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -152,6 +161,18 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
                 ? _value.facilities
                 : facilities // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            status: null == status
+                ? _value.status
+                : status // ignore: cast_nullable_to_non_nullable
+                      as RoomStatus,
+            ownerName: freezed == ownerName
+                ? _value.ownerName
+                : ownerName // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            rejectionReason: freezed == rejectionReason
+                ? _value.rejectionReason
+                : rejectionReason // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -181,6 +202,9 @@ abstract class _$$RoomEntityImplCopyWith<$Res>
     double rating,
     RoomType type,
     List<String> facilities,
+    RoomStatus status,
+    String? ownerName,
+    String? rejectionReason,
   });
 }
 
@@ -211,6 +235,9 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
     Object? rating = null,
     Object? type = null,
     Object? facilities = null,
+    Object? status = null,
+    Object? ownerName = freezed,
+    Object? rejectionReason = freezed,
   }) {
     return _then(
       _$RoomEntityImpl(
@@ -266,6 +293,18 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
             ? _value._facilities
             : facilities // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        status: null == status
+            ? _value.status
+            : status // ignore: cast_nullable_to_non_nullable
+                  as RoomStatus,
+        ownerName: freezed == ownerName
+            ? _value.ownerName
+            : ownerName // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        rejectionReason: freezed == rejectionReason
+            ? _value.rejectionReason
+            : rejectionReason // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -288,6 +327,9 @@ class _$RoomEntityImpl implements _RoomEntity {
     required this.rating,
     required this.type,
     required final List<String> facilities,
+    this.status = RoomStatus.pending,
+    this.ownerName,
+    this.rejectionReason,
   }) : _images = images,
        _facilities = facilities;
 
@@ -333,8 +375,16 @@ class _$RoomEntityImpl implements _RoomEntity {
   }
 
   @override
+  @JsonKey()
+  final RoomStatus status;
+  @override
+  final String? ownerName;
+  @override
+  final String? rejectionReason;
+
+  @override
   String toString() {
-    return 'RoomEntity(id: $id, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities)';
+    return 'RoomEntity(id: $id, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities, status: $status, ownerName: $ownerName, rejectionReason: $rejectionReason)';
   }
 
   @override
@@ -363,7 +413,12 @@ class _$RoomEntityImpl implements _RoomEntity {
             const DeepCollectionEquality().equals(
               other._facilities,
               _facilities,
-            ));
+            ) &&
+            (identical(other.status, status) || other.status == status) &&
+            (identical(other.ownerName, ownerName) ||
+                other.ownerName == ownerName) &&
+            (identical(other.rejectionReason, rejectionReason) ||
+                other.rejectionReason == rejectionReason));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -383,6 +438,9 @@ class _$RoomEntityImpl implements _RoomEntity {
     rating,
     type,
     const DeepCollectionEquality().hash(_facilities),
+    status,
+    ownerName,
+    rejectionReason,
   );
 
   /// Create a copy of RoomEntity
@@ -414,6 +472,9 @@ abstract class _RoomEntity implements RoomEntity {
     required final double rating,
     required final RoomType type,
     required final List<String> facilities,
+    final RoomStatus status,
+    final String? ownerName,
+    final String? rejectionReason,
   }) = _$RoomEntityImpl;
 
   factory _RoomEntity.fromJson(Map<String, dynamic> json) =
@@ -445,6 +506,12 @@ abstract class _RoomEntity implements RoomEntity {
   RoomType get type;
   @override
   List<String> get facilities;
+  @override
+  RoomStatus get status;
+  @override
+  String? get ownerName;
+  @override
+  String? get rejectionReason;
 
   /// Create a copy of RoomEntity
   /// with the given fields replaced by the non-null parameter values.

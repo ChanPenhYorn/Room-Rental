@@ -14,7 +14,8 @@ import 'package:serverpod/serverpod.dart' as _i1;
 
 enum UserRole implements _i1.SerializableModel {
   tenant,
-  owner;
+  owner,
+  admin;
 
   static UserRole fromJson(String name) {
     switch (name) {
@@ -22,6 +23,8 @@ enum UserRole implements _i1.SerializableModel {
         return UserRole.tenant;
       case 'owner':
         return UserRole.owner;
+      case 'admin':
+        return UserRole.admin;
       default:
         throw ArgumentError('Value "$name" cannot be converted to "UserRole"');
     }

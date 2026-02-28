@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:room_rental_client/room_rental_client.dart';
 import '../../../../core/network/api_client_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/repositories/booking_repository_impl.dart';
 import '../../domain/repositories/booking_repository.dart';
 
@@ -56,8 +57,16 @@ class BookingController extends _$BookingController {
 
 @riverpod
 Future<List<Booking>> myBookings(MyBookingsRef ref) async {
-  final repository = ref.watch(bookingRepositoryProvider);
-  return await repository.getMyBookings();
+  // Watch auth state to trigger rebuild on login/logout
+  final authState = ref.watch(authStateProvider);
+
+  return authState.maybeWhen(
+    authenticated: (_) async {
+      final repository = ref.watch(bookingRepositoryProvider);
+      return await repository.getMyBookings();
+    },
+    orElse: () async => [],
+  );
 }
 
 @riverpod

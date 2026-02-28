@@ -40,6 +40,58 @@ final roomListProvider = AutoDisposeFutureProvider<List<RoomEntity>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef RoomListRef = AutoDisposeFutureProviderRef<List<RoomEntity>>;
+String _$pendingRoomsHash() => r'6ff41b0b4e9cf8888162f85ba81af81a59eec10a';
+
+/// See also [pendingRooms].
+@ProviderFor(pendingRooms)
+final pendingRoomsProvider =
+    AutoDisposeFutureProvider<List<RoomEntity>>.internal(
+      pendingRooms,
+      name: r'pendingRoomsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$pendingRoomsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef PendingRoomsRef = AutoDisposeFutureProviderRef<List<RoomEntity>>;
+String _$myRoomsHash() => r'300c2ede0f657760739d08a7344545926a9fb770';
+
+/// See also [myRooms].
+@ProviderFor(myRooms)
+final myRoomsProvider = AutoDisposeFutureProvider<List<RoomEntity>>.internal(
+  myRooms,
+  name: r'myRoomsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$myRoomsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef MyRoomsRef = AutoDisposeFutureProviderRef<List<RoomEntity>>;
+String _$adminRoomsHash() => r'43395407c1b3774a4468f2926e19de9b102e801d';
+
+/// See also [adminRooms].
+@ProviderFor(adminRooms)
+final adminRoomsProvider = AutoDisposeFutureProvider<List<RoomEntity>>.internal(
+  adminRooms,
+  name: r'adminRoomsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$adminRoomsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AdminRoomsRef = AutoDisposeFutureProviderRef<List<RoomEntity>>;
 String _$selectedCategoryHash() => r'9fbcb369d480ede1bc875040ab35bd83542a1ec4';
 
 /// See also [SelectedCategory].
@@ -72,5 +124,21 @@ final roomFilterProvider =
     );
 
 typedef _$RoomFilter = AutoDisposeNotifier<FilterOptions>;
+String _$roomControllerHash() => r'119501227aeed424ac7b0db1b59700d8171f3d08';
+
+/// See also [RoomController].
+@ProviderFor(RoomController)
+final roomControllerProvider =
+    AutoDisposeNotifierProvider<RoomController, AsyncValue<void>>.internal(
+      RoomController.new,
+      name: r'roomControllerProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$roomControllerHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$RoomController = AutoDisposeNotifier<AsyncValue<void>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

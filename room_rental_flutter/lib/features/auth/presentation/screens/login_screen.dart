@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:room_rental_flutter/main.dart';
 import 'package:room_rental_flutter/core/theme/app_theme.dart';
 import 'package:room_rental_flutter/features/auth/presentation/providers/auth_providers.dart';
 import 'package:room_rental_flutter/features/listings/presentation/screens/home_screen.dart';
@@ -20,10 +21,10 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController(
-    text: 'chanpenh@example.com',
+    text: 'admin2@roomrental.com',
   );
   final _passwordController = TextEditingController(
-    text: 'password123',
+    text: 'password',
   );
   bool _rememberMe = false;
   bool _obscurePassword = true;
@@ -335,6 +336,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 24),
+
+                // DEV Only: Seed Button
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      try {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Seeding Database...')),
+                        );
+                        final success = await client.seed.seedData();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                success
+                                    ? 'Database Seeded! Proceed to login'
+                                    : 'Database already seeded',
+                              ),
+                              backgroundColor: success
+                                  ? AppTheme.primaryGreen
+                                  : Colors.orange,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error seeding database: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.data_usage),
+                    label: Text(
+                      'DEV: Seed Database',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

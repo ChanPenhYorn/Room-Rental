@@ -31,20 +31,114 @@ class RoomRepositoryImpl implements RoomRepository {
     }
   }
 
+  @override
+  Future<RoomEntity?> createRoom(Room room) async {
+    try {
+      final result = await client.room.createRoom(room);
+      if (result == null) {
+        print('❌ [API] createRoom returned null from server');
+        return null;
+      }
+      print('✅ [API] createRoom succeeded, id=${result.id}');
+      return _mapToEntity(result);
+    } catch (e, stack) {
+      print('❌ [API] Error creating room: $e');
+      print('❌ [API] Stack: $stack');
+      return null;
+    }
+  }
+
+  @override
+  Future<List<RoomEntity>> getPendingRooms() async {
+    try {
+      final rooms = await client.room.getPendingRooms();
+      print('✅ [API] Got ${rooms.length} pending rooms from server');
+      return rooms.map((room) => _mapToEntity(room)).toList();
+    } catch (e) {
+      print('❌ [API] Error fetching pending rooms: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<bool> updateRoomStatus(
+    int roomId,
+    RoomStatus status, {
+    String? rejectionReason,
+  }) async {
+    try {
+      return await client.room.updateRoomStatus(
+        roomId,
+        status,
+        rejectionReason: rejectionReason,
+      );
+    } catch (e) {
+      print('❌ [API] Error updating room status: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<List<RoomEntity>> getMyRooms() async {
+    try {
+      final rooms = await client.room.getMyRooms();
+      print('✅ [API] Got ${rooms.length} my rooms from server');
+      return rooms.map((room) => _mapToEntity(room)).toList();
+    } catch (e) {
+      print('❌ [API] Error fetching my rooms: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<RoomEntity>> getAllRoomsAsAdmin() async {
+    try {
+      final rooms = await client.room.getAllRoomsAsAdmin();
+      print('✅ [API] Got ${rooms.length} total rooms from server for admin');
+      return rooms.map((room) => _mapToEntity(room)).toList();
+    } catch (e) {
+      print('❌ [API] Error fetching all admin rooms: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<bool> toggleRoomAvailability(int roomId) async {
+    try {
+      return await client.room.toggleRoomAvailability(roomId);
+    } catch (e) {
+      print('❌ [API] Error toggling room availability: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> deleteRoom(int roomId) async {
+    try {
+      return await client.room.deleteRoom(roomId);
+    } catch (e) {
+      print('❌ [API] Error deleting room: $e');
+      return false;
+    }
+  }
+
   RoomEntity _mapToEntity(Room dto) {
     return RoomEntity(
       id: dto.id ?? 0,
-      title: dto.title,
-      description: dto.description,
-      price: dto.price,
-      location: dto.location,
-      latitude: dto.latitude,
-      longitude: dto.longitude,
+      title: dto.title ?? '',
+      description: dto.description ?? '',
+      price: dto.price ?? 0.0,
+      location: dto.location ?? '',
+      latitude: dto.latitude ?? 0.0,
+      longitude: dto.longitude ?? 0.0,
       imageUrl: dto.imageUrl,
       images: dto.images ?? [],
-      isAvailable: dto.isAvailable,
-      rating: dto.rating,
-      type: dto.type,
+      isAvailable: dto.isAvailable ?? true,
+      rating: dto.rating ?? 0.0,
+      type: dto.type ?? RoomType.apartment1br,
+      status: dto.status ?? RoomStatus.pending,
+      ownerName: dto.owner?.fullName,
+      rejectionReason: dto.rejectionReason,
       facilities:
           dto.facilities
               ?.map((f) => f.facility?.name ?? '')

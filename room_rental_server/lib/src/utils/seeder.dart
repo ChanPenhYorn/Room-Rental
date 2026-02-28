@@ -316,10 +316,13 @@ class DataSeeder {
       session.log('UserInfo ID: $userInfoId');
 
       // Step 6: Create the custom user profile
+      // IMPORTANT: Set authUserId to the new IDP UUID (from step 1) so that
+      // getMyProfile can find this record when the user logs in via the new IDP.
       await User.db.insertRow(
         session,
         User(
           userInfoId: userInfoId,
+          authUserId: authUserId, // Link the new IDP UUID to this User record
           fullName: fullName,
           role: role,
           createdAt: DateTime.now(),

@@ -10,7 +10,8 @@ class FavoriteEndpoint extends Endpoint {
   /// Toggles the favorite status of a room.
   Future<bool> toggleFavorite(Session session, int roomId) async {
     try {
-      final userId = await UserUtils.getAuthenticatedUserId(session);
+      final user = await UserUtils.getOrCreateUser(session);
+      final userId = user?.id;
       if (userId == null) throw Exception('Not authenticated');
       session.log(
         '❤️ Toggling favorite for user $userId, room $roomId',
@@ -67,7 +68,8 @@ class FavoriteEndpoint extends Endpoint {
 
   /// Get list of favorite room IDs.
   Future<List<int>> getFavoriteRoomIds(Session session) async {
-    final userId = await UserUtils.getAuthenticatedUserId(session);
+    final user = await UserUtils.getOrCreateUser(session);
+    final userId = user?.id;
     if (userId == null) return [];
 
     final favorites = await Favorite.db.find(
@@ -79,7 +81,8 @@ class FavoriteEndpoint extends Endpoint {
 
   /// Get full favorite objects with room details.
   Future<List<Favorite>> getUserFavorites(Session session) async {
-    final userId = await UserUtils.getAuthenticatedUserId(session);
+    final user = await UserUtils.getOrCreateUser(session);
+    final userId = user?.id;
     if (userId == null) return [];
 
     return await Favorite.db.find(

@@ -20,7 +20,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController(text: "Test Owner");
   final _emailController = TextEditingController(
-    text: "owner_test_${DateTime.now().millisecondsSinceEpoch}@example.com",
+    text: "test@example.com",
   );
   final _phoneController = TextEditingController(
     text: "123456789",

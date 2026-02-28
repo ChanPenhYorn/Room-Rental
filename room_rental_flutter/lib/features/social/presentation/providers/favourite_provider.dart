@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../auth/data/providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 
 part 'favourite_provider.g.dart';
 
@@ -9,8 +10,13 @@ part 'favourite_provider.g.dart';
 class FavouriteRooms extends _$FavouriteRooms {
   @override
   Future<List<int>> build() async {
-    // Load favorite room IDs from server on initialization
-    return await _loadFavorites();
+    // Watch auth state to trigger rebuild on login/logout
+    final authState = ref.watch(authStateProvider);
+
+    return authState.maybeWhen(
+      authenticated: (_) => _loadFavorites(),
+      orElse: () => [],
+    );
   }
 
   /// Load favorites from server
