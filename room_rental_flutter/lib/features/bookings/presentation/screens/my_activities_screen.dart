@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:room_rental_client/room_rental_client.dart';
 import 'package:room_rental_flutter/core/theme/app_theme.dart';
 import '../providers/booking_provider.dart';
+import 'booking_details_screen.dart';
 
 /// My Activities Dashboard
 /// Shows all user bookings (active, upcoming, past)
@@ -330,7 +331,14 @@ class _MyActivitiesScreenState extends ConsumerState<MyActivitiesScreen>
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          // View details
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookingDetailsScreen(
+                                bookingId: booking.id!,
+                              ),
+                            ),
+                          );
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(

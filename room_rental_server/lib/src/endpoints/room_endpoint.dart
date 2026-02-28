@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import '../utils/user_utils.dart';
 
 class RoomEndpoint extends Endpoint {
   @override
@@ -79,18 +80,14 @@ class RoomEndpoint extends Endpoint {
     );
   }
 
-  /// Create a new room (Owner only)
   Future<Room?> createRoom(Session session, Room room) async {
-    final authInfo = session.authenticated;
-    if (authInfo == null) return null;
-    final authIdString = authInfo.userIdentifier;
-    final authId = int.tryParse(authIdString);
-    if (authId == null) return null;
+    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
+    if (userInfoId == null) return null;
 
     // Verify user exists and is an owner
     final user = await User.db.findFirstRow(
       session,
-      where: (t) => t.userInfo.id.equals(authId),
+      where: (t) => t.userInfoId.equals(userInfoId),
     );
 
     if (user == null || user.role != UserRole.owner) return null;

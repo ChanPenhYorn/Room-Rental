@@ -3,74 +3,12 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_server/serverpod_auth_server.dart';
 import '../generated/protocol.dart';
 import '../utils/cloudinary_service.dart';
+import '../utils/user_utils.dart';
 
 class AuthEndpoint extends Endpoint {
-  /// Helper to get the integer UserInfo ID from the session identifier
-  Future<int?> _getAuthenticatedUserId(Session session) async {
-    try {
-      final authInfo = await session.authenticated;
-      if (authInfo == null) {
-        session.log('_getAuthenticatedUserId: Session not authenticated');
-        return null;
-      }
-
-      final userIdentifier = authInfo.userIdentifier;
-      session.log(
-        '_getAuthenticatedUserId: Resolving identifier: $userIdentifier',
-      );
-
-      // 1. Standard Lookup
-      var userInfo = await UserInfo.db.findFirstRow(
-        session,
-        where: (t) => t.userIdentifier.equals(userIdentifier),
-      );
-
-      if (userInfo != null) {
-        session.log(
-          '_getAuthenticatedUserId: Found via standard lookup. ID: ${userInfo.id}',
-        );
-        return userInfo.id;
-      }
-
-      // 2. Smart Linker: Search by Email if we know it or if it's the only record
-      // This handles the case where the DB uses email but the session uses UUID
-      final allInfos = await UserInfo.db.find(session, limit: 5);
-      for (var info in allInfos) {
-        // If we find a record with your email, we link it to your current UUID session
-        if (info.userIdentifier.contains('@') || info.email != null) {
-          session.log(
-            '_getAuthenticatedUserId: Smart Linker found potential match: ${info.userIdentifier} (ID: ${info.id})',
-          );
-          return info.id;
-        }
-      }
-
-      // 3. App-Specific Link
-      final appUser = await User.db.findFirstRow(
-        session,
-        where: (t) => t.authUserId.equals(userIdentifier),
-      );
-      if (appUser != null && appUser.userInfoId != null) {
-        session.log(
-          '_getAuthenticatedUserId: Found via existing User record link. ID: ${appUser.userInfoId}',
-        );
-        return appUser.userInfoId;
-      }
-
-      return null;
-    } catch (e, stack) {
-      session.log(
-        'Error resolving authenticated user ID: $e',
-        level: LogLevel.error,
-        stackTrace: stack,
-      );
-      return null;
-    }
-  }
-
   /// Create a new user profile after registration
   Future<User?> createProfile(Session session, User user) async {
-    final userInfoId = await _getAuthenticatedUserId(session);
+    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
     final authInfo = await session.authenticated;
 
     if (authInfo != null) {
@@ -94,7 +32,7 @@ class AuthEndpoint extends Endpoint {
         return null;
       }
 
-      final userInfoId = await _getAuthenticatedUserId(session);
+      final userInfoId = await UserUtils.getAuthenticatedUserId(session);
       final userIdentifier = authInfo.userIdentifier;
 
       session.log(
@@ -207,7 +145,7 @@ class AuthEndpoint extends Endpoint {
     String? imageBase64,
   }) async {
     try {
-      final userInfoId = await _getAuthenticatedUserId(session);
+      final userInfoId = await UserUtils.getAuthenticatedUserId(session);
       if (userInfoId == null) {
         session.log(
           'updateProfile: Not authenticated',

@@ -59,3 +59,9 @@ Future<List<Booking>> myBookings(MyBookingsRef ref) async {
   final repository = ref.watch(bookingRepositoryProvider);
   return await repository.getMyBookings();
 }
+
+@riverpod
+Future<Booking?> getBookingById(GetBookingByIdRef ref, int id) async {
+  final repository = ref.watch(bookingRepositoryProvider);
+  return await repository.getBookingById(id);
+}

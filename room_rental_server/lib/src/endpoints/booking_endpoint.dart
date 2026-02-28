@@ -1,38 +1,14 @@
 import 'package:serverpod/serverpod.dart';
-import 'package:serverpod_auth_server/serverpod_auth_server.dart';
 import '../generated/protocol.dart';
+import '../utils/user_utils.dart';
 
 class BookingEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
-  /// Helper to get the integer UserInfo ID from the session identifier
-  Future<int?> _getAuthenticatedUserId(Session session) async {
-    final authInfo = session.authenticated;
-    if (authInfo == null) return null;
-
-    final userIdentifier = authInfo.userIdentifier;
-
-    // Standard lookup in UserInfo table
-    final userInfo = await UserInfo.db.findFirstRow(
-      session,
-      where: (t) => t.userIdentifier.equals(userIdentifier),
-    );
-
-    if (userInfo != null) return userInfo.id;
-
-    // Fallback search in User table
-    final user = await User.db.findFirstRow(
-      session,
-      where: (t) => t.authUserId.equals(userIdentifier),
-    );
-
-    return user?.userInfoId;
-  }
-
   /// Create a new booking
   Future<Booking?> createBooking(Session session, Booking booking) async {
-    final userInfoId = await _getAuthenticatedUserId(session);
+    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
     if (userInfoId == null) return null;
 
     // Fetch the User record associated with the authenticated UserInfo
@@ -69,7 +45,7 @@ class BookingEndpoint extends Endpoint {
 
   /// Get all bookings for the current user
   Future<List<Booking>> getMyBookings(Session session) async {
-    final userInfoId = await _getAuthenticatedUserId(session);
+    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
     if (userInfoId == null) return [];
 
     final user = await User.db.findFirstRow(
@@ -94,7 +70,7 @@ class BookingEndpoint extends Endpoint {
 
   /// Get a specific booking by ID
   Future<Booking?> getBookingById(Session session, int id) async {
-    final userInfoId = await _getAuthenticatedUserId(session);
+    final userInfoId = await UserUtils.getAuthenticatedUserId(session);
     if (userInfoId == null) return null;
 
     final user = await User.db.findFirstRow(
