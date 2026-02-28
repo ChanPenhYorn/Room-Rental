@@ -31,7 +31,7 @@ webServer:
 database:
   host: localhost
   port: 8090
-  name: dwellly
+  name: room_rental
   user: postgres
   #requireSsl: true # defaults to false
   #isUnixSocket: true # defaults to false
@@ -51,6 +51,7 @@ sessionLogs:
   persistentEnabled: true
   consoleEnabled: true
   consoleLogFormat: text # Defaults to "json", options are "text" or "json"
+
 
 # futureCallExecutionEnabled: true # Defaults to true
 

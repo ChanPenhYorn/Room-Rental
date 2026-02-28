@@ -124,7 +124,7 @@ final roomFilterProvider =
     );
 
 typedef _$RoomFilter = AutoDisposeNotifier<FilterOptions>;
-String _$roomControllerHash() => r'119501227aeed424ac7b0db1b59700d8171f3d08';
+String _$roomControllerHash() => r'0bf4d13cf8c75f0b934a5b2cbe966adfab9935de';
 
 /// See also [RoomController].
 @ProviderFor(RoomController)

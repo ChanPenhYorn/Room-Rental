@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:flutter/material.dart';
+import 'shared/widgets/connection_error_dialog.dart';
 import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
@@ -16,6 +18,9 @@ import 'features/auth/presentation/providers/auth_providers.dart';
 
 /// Global client used to talk to the server.
 late final Client client;
+
+/// Global navigator key for showing dialogs without context.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 /// The new Serverpod 3.3 session manager (replaces the old SessionManager).
 late final FlutterAuthSessionManager authSessionManager;
@@ -41,6 +46,11 @@ void main() async {
     onFailedCall: (context, error, stackTrace) {
       print('❌ [API FAILURE] ${context.endpointName}.${context.methodName}');
       print('   Error: $error');
+
+      // Handle connection errors globally
+      if (error is SocketException || error is ServerpodClientException) {
+        showConnectionErrorDialog();
+      }
     },
   )..connectivityMonitor = FlutterConnectivityMonitor();
 
@@ -85,12 +95,32 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Dwellly',
       theme: AppTheme.lightTheme,
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
+}
+
+bool _isDialogShowing = false;
+
+void showConnectionErrorDialog() {
+  if (_isDialogShowing) return;
+
+  final context = navigatorKey.currentContext;
+  if (context == null) return;
+
+  _isDialogShowing = true;
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => const ConnectionErrorDialog(),
+  ).then((_) {
+    _isDialogShowing = false;
+  });
 }
 
 Future<String> getServerUrl() async {

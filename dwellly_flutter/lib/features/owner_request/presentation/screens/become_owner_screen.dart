@@ -15,6 +15,7 @@ class BecomeOwnerScreen extends ConsumerStatefulWidget {
 class _BecomeOwnerScreenState extends ConsumerState<BecomeOwnerScreen> {
   final _messageController = TextEditingController();
   bool _isSubmitting = false;
+  bool _showSubmitViewOverride = false;
 
   @override
   void dispose() {
@@ -32,6 +33,7 @@ class _BecomeOwnerScreenState extends ConsumerState<BecomeOwnerScreen> {
     if (mounted) {
       setState(() => _isSubmitting = false);
       if (success) {
+        setState(() => _showSubmitViewOverride = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Request submitted successfully!')),
         );
@@ -61,7 +63,7 @@ class _BecomeOwnerScreenState extends ConsumerState<BecomeOwnerScreen> {
       ),
       body: myRequestAsync.when(
         data: (request) {
-          if (request != null) {
+          if (request != null && !_showSubmitViewOverride) {
             return _buildStatusView(request);
           }
           return _buildSubmitView();
@@ -135,13 +137,8 @@ class _BecomeOwnerScreenState extends ConsumerState<BecomeOwnerScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Allow resubmitting by invalidating the provider locally or similar
-                  // For now, let's just show the submit view if they want to try again
-                  // but typically we'd want to clear the old request or handle it on backend
-                  // The backend `submitRequest` already handles "pending or approved" check.
-                  // So we can just show the submit view if rejected.
                   setState(() {
-                    // This is a bit hacky, normally we'd have a 'resubmit' flow
+                    _showSubmitViewOverride = true;
                   });
                 },
                 style: ElevatedButton.styleFrom(
