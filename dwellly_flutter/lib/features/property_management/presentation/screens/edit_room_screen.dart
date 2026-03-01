@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/listings/domain/entities/room_entity.dart';
@@ -22,6 +24,7 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
   late final TextEditingController _priceController;
   late RoomType _selectedType;
   bool _isLoading = false;
+  final List<String> _uploadedImages = [];
 
   @override
   void initState() {
@@ -35,6 +38,7 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
       text: widget.room.price.toString(),
     );
     _selectedType = widget.room.type;
+    _uploadedImages.addAll(widget.room.images);
   }
 
   @override
@@ -67,8 +71,10 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
       longitude: widget.room.longitude,
       rating: widget.room.rating,
       type: _selectedType,
-      imageUrl: widget.room.imageUrl,
-      images: widget.room.images,
+      imageUrl: _uploadedImages.isNotEmpty
+          ? _uploadedImages.first
+          : widget.room.imageUrl,
+      images: _uploadedImages,
       isAvailable: widget.room.isAvailable,
       createdAt: DateTime.now(), // Server-overwritten
       status: widget.room.status,
@@ -211,9 +217,143 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
               prefix: '\$',
               keyboardType: TextInputType.number,
             ),
+            const SizedBox(height: 32),
+            _buildPhotosSection(),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final List<XFile> images = await picker.pickMultiImage();
+      if (images.isNotEmpty) {
+        setState(() {
+          _uploadedImages.addAll(images.map((image) => image.path));
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking images: $e')),
+        );
+      }
+    }
+  }
+
+  ImageProvider _buildImageProvider(String path) {
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return NetworkImage(path);
+    } else {
+      return FileImage(File(path));
+    }
+  }
+
+  Widget _buildPhotosSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Photos'),
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: _pickImage,
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.primaryGreen,
+                      style: BorderStyle.solid,
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.add_a_photo,
+                        size: 32,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Upload Photo',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_uploadedImages.isNotEmpty)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1,
+            ),
+            itemCount: _uploadedImages.length,
+            itemBuilder: (context, index) {
+              return Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image(
+                        image: _buildImageProvider(_uploadedImages[index]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _uploadedImages.removeAt(index);
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+      ],
     );
   }
 

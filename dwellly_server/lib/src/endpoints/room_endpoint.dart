@@ -321,6 +321,20 @@ class RoomEndpoint extends Endpoint {
     }
 
     await Room.db.updateRow(session, room);
+
+    // Notify Admins
+    if (user.role == UserRole.owner) {
+      final isLive = room.status == RoomStatus.approved;
+      await NotificationUtils.notifyAdmins(
+        session,
+        title: isLive ? 'Live Property Updated' : 'Room Edit Request',
+        body: isLive
+            ? '${user.fullName} has updated their live property "${room.title}". Please review the changes.'
+            : '${user.fullName} has resubmitted their rejected property "${room.title}".',
+        data: {'type': 'room_submission', 'roomId': room.id.toString()},
+      );
+    }
+
     return true;
   }
 
