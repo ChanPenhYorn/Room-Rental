@@ -35,8 +35,8 @@ class AuthEndpoint extends Endpoint {
     String? imageBase64,
   }) async {
     try {
-      final userInfoId = await UserUtils.getAuthenticatedUserId(session);
-      if (userInfoId == null) {
+      final authUser = await UserUtils.getOrCreateUser(session);
+      if (authUser == null) {
         session.log(
           'updateProfile: Not authenticated',
           level: LogLevel.warning,
@@ -44,29 +44,22 @@ class AuthEndpoint extends Endpoint {
         return null;
       }
 
+      final userInfoId = authUser.userInfoId;
+
       session.log(
-        'updateProfile: Updating profile for user.id=${user.id}, userInfoId=$userInfoId',
+        'updateProfile: Updating profile for user.id=${user.id}, authUser.id=${authUser.id}, userInfoId=$userInfoId',
       );
 
       // Crucial: If the incoming user object has no ID or wrong userInfoId, fix it
       if (user.id == null) {
-        // Find the existing record in DB to get the correct ID
-        final existing = await User.db.findFirstRow(
-          session,
-          where: (t) =>
-              t.userInfoId.equals(userInfoId) |
-              t.authUserId.equals(user.authUserId ?? ''),
-        );
-        if (existing != null) {
-          user.id = existing.id;
-          user.userInfoId = existing.userInfoId;
-        }
+        user.id = authUser.id;
+        user.userInfoId = userInfoId;
       }
 
       // Authorization check (must match the authenticated user)
-      if (user.userInfoId != null && user.userInfoId != userInfoId) {
+      if (user.id != authUser.id) {
         session.log(
-          'updateProfile: Unauthorized update attempt. target=${user.userInfoId}, auth=$userInfoId',
+          'updateProfile: Unauthorized update attempt. target=${user.id}, auth=${authUser.id}',
           level: LogLevel.error,
         );
         return null;
@@ -87,7 +80,7 @@ class AuthEndpoint extends Endpoint {
           final response = await service.uploadImageBytes(
             session,
             bytes,
-            folder: 'users/$userInfoId',
+            folder: 'users/${userInfoId ?? authUser.id}',
             publicId: 'profile_${DateTime.now().millisecondsSinceEpoch}',
           );
 
@@ -98,12 +91,14 @@ class AuthEndpoint extends Endpoint {
             user.profileImage = response.secureUrl;
 
             // Also update UserInfo imageUrl for auth state
-            final userInfo = await UserInfo.db.findById(session, userInfoId);
-            if (userInfo != null) {
-              userInfo.imageUrl = response.secureUrl;
-              userInfo.fullName = user.fullName;
-              await UserInfo.db.updateRow(session, userInfo);
-              session.log('updateProfile: Updated UserInfo with new image');
+            if (userInfoId != null) {
+              final userInfo = await UserInfo.db.findById(session, userInfoId);
+              if (userInfo != null) {
+                userInfo.imageUrl = response.secureUrl;
+                userInfo.fullName = user.fullName;
+                await UserInfo.db.updateRow(session, userInfo);
+                session.log('updateProfile: Updated UserInfo with new image');
+              }
             }
           }
         } catch (e, stack) {
@@ -115,10 +110,12 @@ class AuthEndpoint extends Endpoint {
         }
       } else {
         // Sync name to UserInfo even if no image
-        final userInfo = await UserInfo.db.findById(session, userInfoId);
-        if (userInfo != null) {
-          userInfo.fullName = user.fullName;
-          await UserInfo.db.updateRow(session, userInfo);
+        if (userInfoId != null) {
+          final userInfo = await UserInfo.db.findById(session, userInfoId);
+          if (userInfo != null) {
+            userInfo.fullName = user.fullName;
+            await UserInfo.db.updateRow(session, userInfo);
+          }
         }
       }
 
