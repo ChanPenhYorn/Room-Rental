@@ -5,7 +5,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../providers/notification_providers.dart';
 import 'package:intl/intl.dart';
 import 'package:dwellly_client/room_rental_client.dart';
-import 'package:dwellly_flutter/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'notification_detail_screen.dart';
 
 class NotificationScreen extends ConsumerWidget {
@@ -110,30 +109,13 @@ class _NotificationItem extends ConsumerWidget {
           ref.read(notificationsProvider.notifier).markAsRead(notification.id!);
         }
 
-        final type = notification.data?['type'];
-        if (type == 'owner_request') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AdminDashboardScreen(initialIndex: 1),
-            ),
-          );
-        } else if (type == 'room_listing_request') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AdminDashboardScreen(initialIndex: 0),
-            ),
-          );
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  NotificationDetailScreen(notification: notification),
-            ),
-          );
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                NotificationDetailScreen(notification: notification),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(16),
