@@ -30,14 +30,17 @@ class OwnerRequestEndpoint extends Endpoint {
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
-    session.log(
-      'OwnerRequestEndpoint: Existing request found: ${existingRequest?.id}, status: ${existingRequest?.status}',
-    );
 
+    // If they are already an owner, return the approved request if it exists
+    if (user.role == UserRole.owner) {
+      session.log('OwnerRequestEndpoint: User is already an owner');
+      return existingRequest;
+    }
+
+    // If they are a tenant, only block if there is a PENDING request
     if (existingRequest != null &&
-        (existingRequest.status == OwnerRequestStatus.pending ||
-            existingRequest.status == OwnerRequestStatus.approved)) {
-      session.log('OwnerRequestEndpoint: Returning existing request');
+        existingRequest.status == OwnerRequestStatus.pending) {
+      session.log('OwnerRequestEndpoint: Returning existing pending request');
       return existingRequest;
     }
 

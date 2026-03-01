@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/owner_request/presentation/providers/owner_request_providers.dart';
+import 'package:dwellly_flutter/features/auth/presentation/providers/user_providers.dart';
 
 class BecomeOwnerScreen extends ConsumerStatefulWidget {
   const BecomeOwnerScreen({super.key});
@@ -49,6 +50,7 @@ class _BecomeOwnerScreenState extends ConsumerState<BecomeOwnerScreen> {
   @override
   Widget build(BuildContext context) {
     final myRequestAsync = ref.watch(myOwnerRequestProvider);
+    final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.surfaceWhite,
@@ -63,7 +65,16 @@ class _BecomeOwnerScreenState extends ConsumerState<BecomeOwnerScreen> {
       ),
       body: myRequestAsync.when(
         data: (request) {
+          final userProfile = profileAsync.value;
+          final isActuallyTenant = userProfile?.role == UserRole.tenant;
+
           if (request != null && !_showSubmitViewOverride) {
+            // If they are a tenant but have an "approved" request, it means
+            // they were downgraded, so we show the submit view to apply again.
+            if (isActuallyTenant &&
+                request.status == OwnerRequestStatus.approved) {
+              return _buildSubmitView();
+            }
             return _buildStatusView(request);
           }
           return _buildSubmitView();
