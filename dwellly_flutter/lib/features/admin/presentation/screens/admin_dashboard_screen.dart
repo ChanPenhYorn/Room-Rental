@@ -14,7 +14,8 @@ import 'package:dwellly_flutter/features/listings/presentation/screens/room_deta
 import 'package:intl/intl.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
-  const AdminDashboardScreen({super.key});
+  final int initialIndex;
+  const AdminDashboardScreen({super.key, this.initialIndex = 0});
 
   @override
   ConsumerState<AdminDashboardScreen> createState() =>
@@ -31,7 +32,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: widget.initialIndex,
+    );
     _tabController.addListener(() {
       setState(() {});
     });

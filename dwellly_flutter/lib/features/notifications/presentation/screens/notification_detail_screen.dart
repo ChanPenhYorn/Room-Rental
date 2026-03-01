@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:dwellly_flutter/features/admin/presentation/screens/admin_dashboard_screen.dart';
 
 class NotificationDetailScreen extends StatelessWidget {
   final AppNotification notification;
@@ -71,31 +72,91 @@ class NotificationDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 48),
-            if (notification.data != null &&
-                notification.data!['type'] == 'role_change')
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Navigate to profile or refresh
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
-                    padding: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            if (notification.data != null) ...[
+              if (notification.data!['type'] == 'role_change')
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    'Go to Profile',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      'Go to Profile',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              if (notification.data!['type'] == 'owner_request')
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const AdminDashboardScreen(initialIndex: 1),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.verified_user_outlined),
+                    label: Text(
+                      'Review Owner Request',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              if (notification.data!['type'] == 'room_listing_request')
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const AdminDashboardScreen(initialIndex: 0),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.home_work_outlined),
+                    label: Text(
+                      'Review Room Listing',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ],
         ),
       ),

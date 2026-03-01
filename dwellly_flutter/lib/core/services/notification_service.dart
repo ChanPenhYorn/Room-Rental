@@ -8,6 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dwellly_flutter/main.dart';
 import '../../features/notifications/presentation/screens/notification_detail_screen.dart';
+import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
@@ -166,7 +167,21 @@ class NotificationService {
 
     if (isClick) {
       final notification = message.notification;
-      if (notification != null) {
+      final type = message.data['type'];
+
+      if (type == 'owner_request') {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => const AdminDashboardScreen(initialIndex: 1),
+          ),
+        );
+      } else if (type == 'room_listing_request') {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => const AdminDashboardScreen(initialIndex: 0),
+          ),
+        );
+      } else if (notification != null) {
         final appNotif = AppNotification(
           title: notification.title ?? 'Notification',
           body: notification.body ?? '',
