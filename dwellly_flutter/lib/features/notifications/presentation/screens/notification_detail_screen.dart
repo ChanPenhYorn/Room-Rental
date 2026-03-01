@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:dwellly_flutter/features/owner_request/presentation/screens/become_owner_screen.dart';
 
 class NotificationDetailScreen extends StatelessWidget {
   final AppNotification notification;
@@ -143,6 +144,36 @@ class NotificationDetailScreen extends StatelessWidget {
                     icon: const Icon(Icons.home_work_outlined),
                     label: Text(
                       'Review Room Listing',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              if (notification.data!['type'] == 'owner_request_status' &&
+                  notification.data!['status'] == 'rejected')
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BecomeOwnerScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.refresh_outlined),
+                    label: Text(
+                      'Submit New Request',
                       style: GoogleFonts.outfit(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
