@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:dwellly_client/room_rental_client.dart';
+import 'package:dwellly_flutter/core/network/api_client_provider.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/listings/domain/entities/room_entity.dart';
 import 'package:dwellly_flutter/features/listings/presentation/providers/room_provider.dart';
@@ -60,6 +62,33 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
 
     setState(() => _isLoading = true);
 
+    final client = ref.read(clientProvider);
+    final finalImages = <String>[];
+
+    for (final imagePath in _uploadedImages) {
+      if (imagePath.startsWith('http') || imagePath.startsWith('https')) {
+        finalImages.add(imagePath);
+      } else {
+        try {
+          final file = File(imagePath);
+          final bytes = await file.readAsBytes();
+          final base64String = base64Encode(bytes);
+          final uploadedUrl = await client.room.uploadRoomImage(base64String);
+          if (uploadedUrl != null) {
+            finalImages.add(uploadedUrl);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to upload image: $e')),
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+    }
+
     final updatedRoom = Room(
       id: widget.room.id,
       ownerId: 0, // Server-overwritten
@@ -71,10 +100,10 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
       longitude: widget.room.longitude,
       rating: widget.room.rating,
       type: _selectedType,
-      imageUrl: _uploadedImages.isNotEmpty
-          ? _uploadedImages.first
+      imageUrl: finalImages.isNotEmpty
+          ? finalImages.first
           : widget.room.imageUrl,
-      images: _uploadedImages,
+      images: finalImages,
       isAvailable: widget.room.isAvailable,
       createdAt: DateTime.now(), // Server-overwritten
       status: widget.room.status,

@@ -4,6 +4,7 @@ import 'package:serverpod_auth_server/serverpod_auth_server.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
 import '../utils/notification_utils.dart';
+import '../utils/cloudinary_service.dart';
 
 class RoomEndpoint extends Endpoint {
   @override
@@ -114,6 +115,37 @@ class RoomEndpoint extends Endpoint {
     return createdRoom;
   }
 
+  /// Upload a room image and return its URL
+  Future<String?> uploadRoomImage(Session session, String imageBase64) async {
+    final user = await UserUtils.getOrCreateUser(session);
+    if (user == null || user.id == null) return null;
+
+    try {
+      final service = CloudinaryService(session);
+      var base64String = imageBase64;
+      if (base64String.contains(',')) {
+        base64String = base64String.split(',').last;
+      }
+
+      final bytes = base64Decode(base64String);
+      final response = await service.uploadImageBytes(
+        session,
+        bytes,
+        folder: 'rooms/${user.id}',
+        publicId: 'room_${DateTime.now().millisecondsSinceEpoch}',
+      );
+
+      return response?.secureUrl;
+    } catch (e, stack) {
+      session.log(
+        'uploadRoomImage: Error uploading image: $e',
+        level: LogLevel.error,
+        stackTrace: stack,
+      );
+      return null;
+    }
+  }
+
   /// Owner/Admin: Get all rooms owned by the current user
   Future<List<Room>> getMyRooms(Session session) async {
     final user = await UserUtils.getOrCreateUser(session);
@@ -220,9 +252,17 @@ class RoomEndpoint extends Endpoint {
             }
             if (data.containsKey('imageUrl')) room.imageUrl = data['imageUrl'];
             if (data.containsKey('images')) {
-              room.images = (data['images'] as List).cast<String>();
+              final newImages = (data['images'] as List).cast<String>();
+              // Cleanup orphaned images
+              final removedImages = (room.images ?? [])
+                  .where((img) => !newImages.contains(img))
+                  .toList();
+              final cloudinary = CloudinaryService(session);
+              for (final img in removedImages) {
+                await cloudinary.deleteImage(session, img);
+              }
+              room.images = newImages;
             }
-
             room.hasPendingEdit = false;
             room.pendingData = null;
           } catch (e) {
@@ -289,8 +329,34 @@ class RoomEndpoint extends Endpoint {
     // Only owner or admin can edit
     if (user.role != UserRole.admin && room.ownerId != user.id) return false;
 
-    if (room.status == RoomStatus.approved) {
-      // Create a map of fields that can be edited
+    if (user.role == UserRole.admin) {
+      // Changes made by Admin are applied directly and approved immediately
+      room.status = RoomStatus.approved;
+      room.rejectionReason = null;
+
+      // Cleanup orphaned images
+      final newImages = updatedRoom.images ?? [];
+      final removedImages = (room.images ?? [])
+          .where((img) => !newImages.contains(img))
+          .toList();
+      final cloudinary = CloudinaryService(session);
+      for (final img in removedImages) {
+        await cloudinary.deleteImage(session, img);
+      }
+
+      room.title = updatedRoom.title;
+      room.description = updatedRoom.description;
+      room.price = updatedRoom.price;
+      room.location = updatedRoom.location;
+      room.latitude = updatedRoom.latitude;
+      room.longitude = updatedRoom.longitude;
+      room.rating = updatedRoom.rating;
+      room.type = updatedRoom.type;
+      room.imageUrl = updatedRoom.imageUrl;
+      room.images = updatedRoom.images;
+      room.isAvailable = updatedRoom.isAvailable;
+    } else if (room.status == RoomStatus.approved) {
+      // Owner updates an approved room -> store as pendingData for review
       final editData = {
         'title': updatedRoom.title,
         'description': updatedRoom.description,
@@ -305,9 +371,22 @@ class RoomEndpoint extends Endpoint {
 
       room.pendingData = jsonEncode(editData);
       room.hasPendingEdit = true;
-      // Note: We don't change the status to pending, stays approved.
+      // Note: We don't change the status to pending, stays approved until admin review.
     } else {
-      // Room is not approved yet, we can overwrite main fields directly.
+      // Normal owner update for a pending/rejected room -> apply directly and reset to pending
+      room.status = RoomStatus.pending;
+      room.rejectionReason = null;
+
+      // Cleanup orphaned images
+      final newImages = updatedRoom.images ?? [];
+      final removedImages = (room.images ?? [])
+          .where((img) => !newImages.contains(img))
+          .toList();
+      final cloudinary = CloudinaryService(session);
+      for (final img in removedImages) {
+        await cloudinary.deleteImage(session, img);
+      }
+
       room.title = updatedRoom.title;
       room.description = updatedRoom.description;
       room.price = updatedRoom.price;
@@ -317,7 +396,7 @@ class RoomEndpoint extends Endpoint {
       room.type = updatedRoom.type;
       room.imageUrl = updatedRoom.imageUrl;
       room.images = updatedRoom.images;
-      room.status = RoomStatus.pending; // Reset to pending if it was rejected
+      // isAvailable is not typically changed by owner directly on pending/rejected rooms
     }
 
     await Room.db.updateRow(session, room);

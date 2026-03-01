@@ -767,6 +767,25 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['room'],
               ),
         ),
+        'uploadRoomImage': _i1.MethodConnector(
+          name: 'uploadRoomImage',
+          params: {
+            'imageBase64': _i1.ParameterDescription(
+              name: 'imageBase64',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['room'] as _i11.RoomEndpoint).uploadRoomImage(
+                    session,
+                    params['imageBase64'],
+                  ),
+        ),
         'getMyRooms': _i1.MethodConnector(
           name: 'getMyRooms',
           params: {},

@@ -1379,6 +1379,37 @@ class _RoomEndpoint {
     });
   }
 
+  _i3.Future<String?> uploadRoomImage(
+    _i1.TestSessionBuilder sessionBuilder,
+    String imageBase64,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'room',
+            method: 'uploadRoomImage',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'room',
+          methodName: 'uploadRoomImage',
+          parameters: _i1.testObjectToJson({'imageBase64': imageBase64}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<String?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<List<_i12.Room>> getMyRooms(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {

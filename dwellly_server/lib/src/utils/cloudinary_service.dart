@@ -92,6 +92,51 @@ class CloudinaryService {
     }
   }
 
+  /// Extracts the public ID from a Cloudinary URL and deletes it
+  Future<bool> deleteImage(Session session, String imageUrl) async {
+    try {
+      // Cloudinary URLs typically look like:
+      // https://res.cloudinary.com/<cloud_name>/image/upload/v<version>/<folder>/<public_id>.<ext>
+      final uri = Uri.tryParse(imageUrl);
+      if (uri == null || !uri.host.contains('cloudinary.com')) {
+        return false;
+      }
+
+      final pathSegments = uri.pathSegments;
+      final uploadIndex = pathSegments.indexOf('upload');
+
+      if (uploadIndex == -1 || uploadIndex + 2 >= pathSegments.length) {
+        return false;
+      }
+
+      // The segments after 'v<version>/' make up the public ID + extension
+      final idSegments = pathSegments.sublist(uploadIndex + 2);
+      final idWithExt = idSegments.join('/');
+
+      // Remove the file extension to get the true public ID
+      final lastDotIndex = idWithExt.lastIndexOf('.');
+      final publicId = lastDotIndex != -1
+          ? idWithExt.substring(0, lastDotIndex)
+          : idWithExt;
+
+      session.log('Deleting Cloudinary image: publicId=$publicId');
+
+      final response = await client.destroy(
+        publicId,
+        resourceType: CloudinaryResourceType.image,
+      );
+
+      return response.isSuccessful;
+    } catch (e, stack) {
+      session.log(
+        'Cloudinary delete error ($imageUrl): $e',
+        level: LogLevel.error,
+        stackTrace: stack,
+      );
+      return false;
+    }
+  }
+
   /// Generates a transformed URL for an image.
   String getImageUrl(String publicId, {int? width, int? height}) {
     // If we don't have a real cloud name yet, return a placeholder

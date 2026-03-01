@@ -41,6 +41,7 @@ room:
   - searchRooms:
   - filterRooms:
   - createRoom:
+  - uploadRoomImage:
   - getMyRooms:
   - getAllRoomsAsAdmin:
   - getPendingRooms:

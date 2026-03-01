@@ -522,6 +522,14 @@ class EndpointRoom extends _i2.EndpointRef {
         {'room': room},
       );
 
+  /// Upload a room image and return its URL
+  _i3.Future<String?> uploadRoomImage(String imageBase64) =>
+      caller.callServerEndpoint<String?>(
+        'room',
+        'uploadRoomImage',
+        {'imageBase64': imageBase64},
+      );
+
   /// Owner/Admin: Get all rooms owned by the current user
   _i3.Future<List<_i12.Room>> getMyRooms() =>
       caller.callServerEndpoint<List<_i12.Room>>(

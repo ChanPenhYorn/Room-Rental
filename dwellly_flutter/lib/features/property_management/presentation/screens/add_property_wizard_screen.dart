@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,6 +148,31 @@ class _AddPropertyWizardScreenState
     try {
       final client = ref.read(clientProvider);
 
+      final finalImages = <String>[];
+      for (final imagePath in _uploadedImages) {
+        if (imagePath.startsWith('http') || imagePath.startsWith('https')) {
+          finalImages.add(imagePath);
+        } else {
+          try {
+            final file = File(imagePath);
+            final bytes = await file.readAsBytes();
+            final base64String = base64Encode(bytes);
+            final uploadedUrl = await client.room.uploadRoomImage(base64String);
+            if (uploadedUrl != null) {
+              finalImages.add(uploadedUrl);
+            }
+          } catch (e) {
+            if (mounted) {
+              Navigator.pop(context); // Close loading
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to upload image: $e')),
+              );
+            }
+            return;
+          }
+        }
+      }
+
       final room = Room(
         ownerId: 0, // Server will overwrite with authenticated user's ID
         title: _titleController.text,
@@ -157,8 +183,8 @@ class _AddPropertyWizardScreenState
         longitude: 104.9282,
         rating: 4.5,
         type: _mapPropertyType(_propertyType),
-        imageUrl: _uploadedImages.isNotEmpty ? _uploadedImages.first : null,
-        images: _uploadedImages,
+        imageUrl: finalImages.isNotEmpty ? finalImages.first : null,
+        images: finalImages,
         isAvailable: true,
         createdAt: DateTime.now(),
         status: RoomStatus.pending,
