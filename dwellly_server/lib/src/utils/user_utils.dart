@@ -109,14 +109,25 @@ class UserUtils {
         }
       }
 
-      // If we found existing records, return the highest-role one
+      // If we found existing records, pick the best one
       if (matchingUsers.isNotEmpty) {
-        matchingUsers.sort(
-          (a, b) => _roleRank(b.role).compareTo(_roleRank(a.role)),
-        );
+        matchingUsers.sort((a, b) {
+          // 1. Prioritize records that already have the correct authUserId (primary session key)
+          final aIsPrimary = a.authUserId == userIdentifier;
+          final bIsPrimary = b.authUserId == userIdentifier;
+          if (aIsPrimary != bIsPrimary) return aIsPrimary ? -1 : 1;
+
+          // 2. Tie-breaker: Highest role (to prevent accidental downgrades of newly linked seeded users)
+          final roleCompare = _roleRank(b.role).compareTo(_roleRank(a.role));
+          if (roleCompare != 0) return roleCompare;
+
+          // 3. Fallback: Most recent record
+          return (b.id ?? 0).compareTo(a.id ?? 0);
+        });
+
         if (matchingUsers.length > 1) {
           session.log(
-            'UserUtils: Found ${matchingUsers.length} records for $userIdentifier, using id=${matchingUsers.first.id} role=${matchingUsers.first.role.name}',
+            'UserUtils: Found ${matchingUsers.length} records for $userIdentifier, picking id=${matchingUsers.first.id} role=${matchingUsers.first.role.name} (primary=${matchingUsers.first.authUserId == userIdentifier})',
           );
         }
         final found = matchingUsers.first;
