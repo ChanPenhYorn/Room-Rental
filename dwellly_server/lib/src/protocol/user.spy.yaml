@@ -9,6 +9,7 @@ fields:
   bio: String?
   role: UserRole
   profileImage: String?
+  fcmToken: String?
   createdAt: DateTime
   rooms: List<Room>?, relation(name=user_rooms)
   bookings: List<Booking>?, relation(name=user_bookings)

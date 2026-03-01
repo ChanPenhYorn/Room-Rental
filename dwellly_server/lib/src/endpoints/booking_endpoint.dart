@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
+import '../utils/notification_utils.dart';
 
 class BookingEndpoint extends Endpoint {
   @override
@@ -39,6 +40,19 @@ class BookingEndpoint extends Endpoint {
 
     // Insert booking
     final savedBooking = await Booking.db.insertRow(session, booking);
+
+    // Notify Room Owner
+    await NotificationUtils.sendNotification(
+      session,
+      recipientId: room.ownerId,
+      title: 'New Booking!',
+      body: '${user.fullName} has booked your room: ${room.title}',
+      data: {
+        'type': 'new_booking',
+        'bookingId': savedBooking.id.toString(),
+        'roomId': room.id.toString(),
+      },
+    );
 
     return savedBooking;
   }

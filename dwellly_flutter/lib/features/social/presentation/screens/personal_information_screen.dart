@@ -9,6 +9,7 @@ import 'package:dwellly_client/room_rental_client.dart'; // Import User class
 import 'package:serverpod_auth_client/serverpod_auth_client.dart'; // Import UserInfo class
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/auth_providers.dart';
+import '../../../../features/auth/presentation/providers/user_providers.dart';
 
 /// Personal Information Screen
 /// Allows users to edit their profile information
@@ -449,6 +450,7 @@ class _PersonalInformationScreenState
       );
 
       if (mounted) {
+        ref.invalidate(userProfileProvider);
         await _loadProfileInfo(); // Reload to get the latest server data and reset _hasChanges
         setState(() {
           _isEditing = false;

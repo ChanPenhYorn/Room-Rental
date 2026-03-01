@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_server/serverpod_auth_server.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
+import '../utils/notification_utils.dart';
 
 class OwnerRequestEndpoint extends Endpoint {
   @override
@@ -51,6 +52,15 @@ class OwnerRequestEndpoint extends Endpoint {
 
     final inserted = await BecomeOwnerRequest.db.insertRow(session, request);
     session.log('OwnerRequestEndpoint: Inserted request id: ${inserted.id}');
+
+    // Notify Admins
+    await NotificationUtils.notifyAdmins(
+      session,
+      title: 'New Owner Request',
+      body: '${user.fullName} has requested to become an owner.',
+      data: {'type': 'owner_request', 'requestId': inserted.id.toString()},
+    );
+
     return inserted;
   }
 
@@ -98,6 +108,18 @@ class OwnerRequestEndpoint extends Endpoint {
     request.updatedAt = DateTime.now();
 
     await BecomeOwnerRequest.db.updateRow(session, request);
+
+    // Notify User
+    await NotificationUtils.sendNotification(
+      session,
+      recipientId: request.userId,
+      title:
+          'Owner Request ${status == OwnerRequestStatus.approved ? 'Approved' : 'Rejected'}',
+      body: status == OwnerRequestStatus.approved
+          ? 'Congratulations! You are now an owner.'
+          : 'Your request to become an owner was rejected.',
+      data: {'type': 'owner_request_status', 'status': status.name},
+    );
 
     // If approved, update user role to owner
     if (status == OwnerRequestStatus.approved) {

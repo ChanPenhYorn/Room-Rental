@@ -1,0 +1,13 @@
+class: AppNotification
+table: app_notification
+fields:
+  userId: int
+  user: User?, relation(field=userId)
+  title: String
+  body: String
+  data: Map<String, String>?
+  isRead: bool
+  createdAt: DateTime
+indexes:
+  app_notification_user_idx:
+    fields: userId

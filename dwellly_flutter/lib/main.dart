@@ -8,9 +8,12 @@ import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'core/network/api_client_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/notification_service.dart';
 
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -27,6 +30,10 @@ late final FlutterAuthSessionManager authSessionManager;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   final serverUrl = await getServerUrl();
   print('🌐 [INIT] Server URL: $serverUrl');
@@ -59,6 +66,11 @@ void main() async {
 
   // 4. Restore any persisted session from secure storage.
   await authSessionManager.restore();
+
+  // 5. Initialize Notifications if logged in
+  if (authSessionManager.isAuthenticated) {
+    NotificationService().initialize();
+  }
 
   // 5. Wait a bit for session to be fully initialized (helps with iOS simulator)
   await Future.delayed(const Duration(milliseconds: 500));

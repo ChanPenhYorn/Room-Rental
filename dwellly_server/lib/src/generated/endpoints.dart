@@ -17,24 +17,25 @@ import '../endpoints/auth_endpoint.dart' as _i4;
 import '../endpoints/booking_endpoint.dart' as _i5;
 import '../endpoints/dev_endpoint.dart' as _i6;
 import '../endpoints/favorite_endpoint.dart' as _i7;
-import '../endpoints/owner_request_endpoint.dart' as _i8;
-import '../endpoints/payment_endpoint.dart' as _i9;
-import '../endpoints/room_endpoint.dart' as _i10;
-import '../endpoints/seed_endpoint.dart' as _i11;
-import '../endpoints/user_endpoint.dart' as _i12;
-import '../greetings/greeting_endpoint.dart' as _i13;
-import 'package:dwellly_server/src/generated/user.dart' as _i14;
-import 'package:dwellly_server/src/generated/booking.dart' as _i15;
-import 'package:dwellly_server/src/generated/owner_request_status.dart' as _i16;
-import 'package:dwellly_server/src/generated/room_type.dart' as _i17;
-import 'package:dwellly_server/src/generated/room.dart' as _i18;
-import 'package:dwellly_server/src/generated/room_status.dart' as _i19;
-import 'package:dwellly_server/src/generated/user_role.dart' as _i20;
-import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i21;
+import '../endpoints/notification_endpoint.dart' as _i8;
+import '../endpoints/owner_request_endpoint.dart' as _i9;
+import '../endpoints/payment_endpoint.dart' as _i10;
+import '../endpoints/room_endpoint.dart' as _i11;
+import '../endpoints/seed_endpoint.dart' as _i12;
+import '../endpoints/user_endpoint.dart' as _i13;
+import '../greetings/greeting_endpoint.dart' as _i14;
+import 'package:dwellly_server/src/generated/user.dart' as _i15;
+import 'package:dwellly_server/src/generated/booking.dart' as _i16;
+import 'package:dwellly_server/src/generated/owner_request_status.dart' as _i17;
+import 'package:dwellly_server/src/generated/room_type.dart' as _i18;
+import 'package:dwellly_server/src/generated/room.dart' as _i19;
+import 'package:dwellly_server/src/generated/room_status.dart' as _i20;
+import 'package:dwellly_server/src/generated/user_role.dart' as _i21;
+import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i22;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
-    as _i22;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i23;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i24;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -76,37 +77,43 @@ class Endpoints extends _i1.EndpointDispatch {
           'favorite',
           null,
         ),
-      'ownerRequest': _i8.OwnerRequestEndpoint()
+      'notification': _i8.NotificationEndpoint()
+        ..initialize(
+          server,
+          'notification',
+          null,
+        ),
+      'ownerRequest': _i9.OwnerRequestEndpoint()
         ..initialize(
           server,
           'ownerRequest',
           null,
         ),
-      'payment': _i9.PaymentEndpoint()
+      'payment': _i10.PaymentEndpoint()
         ..initialize(
           server,
           'payment',
           null,
         ),
-      'room': _i10.RoomEndpoint()
+      'room': _i11.RoomEndpoint()
         ..initialize(
           server,
           'room',
           null,
         ),
-      'seed': _i11.SeedEndpoint()
+      'seed': _i12.SeedEndpoint()
         ..initialize(
           server,
           'seed',
           null,
         ),
-      'user': _i12.UserEndpoint()
+      'user': _i13.UserEndpoint()
         ..initialize(
           server,
           'user',
           null,
         ),
-      'greeting': _i13.GreetingEndpoint()
+      'greeting': _i14.GreetingEndpoint()
         ..initialize(
           server,
           'greeting',
@@ -336,7 +343,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'user': _i1.ParameterDescription(
               name: 'user',
-              type: _i1.getType<_i14.User>(),
+              type: _i1.getType<_i15.User>(),
               nullable: false,
             ),
             'imageBase64': _i1.ParameterDescription(
@@ -366,7 +373,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'booking': _i1.ParameterDescription(
               name: 'booking',
-              type: _i1.getType<_i15.Booking>(),
+              type: _i1.getType<_i16.Booking>(),
               nullable: false,
             ),
           },
@@ -481,6 +488,61 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['notification'] = _i1.EndpointConnector(
+      name: 'notification',
+      endpoint: endpoints['notification']!,
+      methodConnectors: {
+        'getMyNotifications': _i1.MethodConnector(
+          name: 'getMyNotifications',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .getMyNotifications(session),
+        ),
+        'getUnreadCount': _i1.MethodConnector(
+          name: 'getUnreadCount',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .getUnreadCount(session),
+        ),
+        'markAsRead': _i1.MethodConnector(
+          name: 'markAsRead',
+          params: {
+            'notificationId': _i1.ParameterDescription(
+              name: 'notificationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .markAsRead(
+                    session,
+                    params['notificationId'],
+                  ),
+        ),
+        'markAllAsRead': _i1.MethodConnector(
+          name: 'markAllAsRead',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .markAllAsRead(session),
+        ),
+      },
+    );
     connectors['ownerRequest'] = _i1.EndpointConnector(
       name: 'ownerRequest',
       endpoint: endpoints['ownerRequest']!,
@@ -498,7 +560,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['ownerRequest'] as _i8.OwnerRequestEndpoint)
+              ) async => (endpoints['ownerRequest'] as _i9.OwnerRequestEndpoint)
                   .submitRequest(
                     session,
                     message: params['message'],
@@ -511,7 +573,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['ownerRequest'] as _i8.OwnerRequestEndpoint)
+              ) async => (endpoints['ownerRequest'] as _i9.OwnerRequestEndpoint)
                   .getMyRequest(session),
         ),
         'getAllRequests': _i1.MethodConnector(
@@ -521,7 +583,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['ownerRequest'] as _i8.OwnerRequestEndpoint)
+              ) async => (endpoints['ownerRequest'] as _i9.OwnerRequestEndpoint)
                   .getAllRequests(session),
         ),
         'updateRequestStatus': _i1.MethodConnector(
@@ -534,7 +596,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i16.OwnerRequestStatus>(),
+              type: _i1.getType<_i17.OwnerRequestStatus>(),
               nullable: false,
             ),
           },
@@ -542,7 +604,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['ownerRequest'] as _i8.OwnerRequestEndpoint)
+              ) async => (endpoints['ownerRequest'] as _i9.OwnerRequestEndpoint)
                   .updateRequestStatus(
                     session,
                     params['requestId'],
@@ -573,7 +635,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['payment'] as _i9.PaymentEndpoint)
+              ) async => (endpoints['payment'] as _i10.PaymentEndpoint)
                   .createAbaPaymentRequest(
                     session,
                     amount: params['amount'],
@@ -593,7 +655,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['payment'] as _i9.PaymentEndpoint)
+              ) async => (endpoints['payment'] as _i10.PaymentEndpoint)
                   .verifyAbaTransaction(
                     session,
                     params['tranId'],
@@ -613,7 +675,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['room'] as _i10.RoomEndpoint).getRooms(session),
+                  (endpoints['room'] as _i11.RoomEndpoint).getRooms(session),
         ),
         'getRoomById': _i1.MethodConnector(
           name: 'getRoomById',
@@ -628,7 +690,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint).getRoomById(
+              ) async => (endpoints['room'] as _i11.RoomEndpoint).getRoomById(
                 session,
                 params['id'],
               ),
@@ -646,7 +708,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint).searchRooms(
+              ) async => (endpoints['room'] as _i11.RoomEndpoint).searchRooms(
                 session,
                 params['query'],
               ),
@@ -666,7 +728,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'type': _i1.ParameterDescription(
               name: 'type',
-              type: _i1.getType<_i17.RoomType?>(),
+              type: _i1.getType<_i18.RoomType?>(),
               nullable: true,
             ),
             'minRating': _i1.ParameterDescription(
@@ -679,7 +741,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint).filterRooms(
+              ) async => (endpoints['room'] as _i11.RoomEndpoint).filterRooms(
                 session,
                 minPrice: params['minPrice'],
                 maxPrice: params['maxPrice'],
@@ -692,7 +754,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'room': _i1.ParameterDescription(
               name: 'room',
-              type: _i1.getType<_i18.Room>(),
+              type: _i1.getType<_i19.Room>(),
               nullable: false,
             ),
           },
@@ -700,7 +762,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint).createRoom(
+              ) async => (endpoints['room'] as _i11.RoomEndpoint).createRoom(
                 session,
                 params['room'],
               ),
@@ -713,7 +775,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['room'] as _i10.RoomEndpoint).getMyRooms(session),
+                  (endpoints['room'] as _i11.RoomEndpoint).getMyRooms(session),
         ),
         'getAllRoomsAsAdmin': _i1.MethodConnector(
           name: 'getAllRoomsAsAdmin',
@@ -722,7 +784,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint)
+              ) async => (endpoints['room'] as _i11.RoomEndpoint)
                   .getAllRoomsAsAdmin(session),
         ),
         'getPendingRooms': _i1.MethodConnector(
@@ -732,7 +794,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint)
+              ) async => (endpoints['room'] as _i11.RoomEndpoint)
                   .getPendingRooms(session),
         ),
         'updateRoomStatus': _i1.MethodConnector(
@@ -745,7 +807,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'status': _i1.ParameterDescription(
               name: 'status',
-              type: _i1.getType<_i19.RoomStatus>(),
+              type: _i1.getType<_i20.RoomStatus>(),
               nullable: false,
             ),
             'rejectionReason': _i1.ParameterDescription(
@@ -759,7 +821,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['room'] as _i10.RoomEndpoint).updateRoomStatus(
+                  (endpoints['room'] as _i11.RoomEndpoint).updateRoomStatus(
                     session,
                     params['roomId'],
                     params['status'],
@@ -779,7 +841,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint)
+              ) async => (endpoints['room'] as _i11.RoomEndpoint)
                   .toggleRoomAvailability(
                     session,
                     params['roomId'],
@@ -795,7 +857,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'updatedRoom': _i1.ParameterDescription(
               name: 'updatedRoom',
-              type: _i1.getType<_i18.Room>(),
+              type: _i1.getType<_i19.Room>(),
               nullable: false,
             ),
           },
@@ -804,7 +866,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['room'] as _i10.RoomEndpoint).requestRoomUpdate(
+                  (endpoints['room'] as _i11.RoomEndpoint).requestRoomUpdate(
                     session,
                     params['roomId'],
                     params['updatedRoom'],
@@ -823,7 +885,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['room'] as _i10.RoomEndpoint).deleteRoom(
+              ) async => (endpoints['room'] as _i11.RoomEndpoint).deleteRoom(
                 session,
                 params['roomId'],
               ),
@@ -842,7 +904,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['seed'] as _i11.SeedEndpoint).seedData(session),
+                  (endpoints['seed'] as _i12.SeedEndpoint).seedData(session),
         ),
       },
     );
@@ -860,7 +922,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'role': _i1.ParameterDescription(
               name: 'role',
-              type: _i1.getType<_i20.UserRole?>(),
+              type: _i1.getType<_i21.UserRole?>(),
               nullable: true,
             ),
           },
@@ -868,7 +930,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['user'] as _i12.UserEndpoint).getAllUsers(
+              ) async => (endpoints['user'] as _i13.UserEndpoint).getAllUsers(
                 session,
                 searchTerm: params['searchTerm'],
                 role: params['role'],
@@ -884,7 +946,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'newRole': _i1.ParameterDescription(
               name: 'newRole',
-              type: _i1.getType<_i20.UserRole>(),
+              type: _i1.getType<_i21.UserRole>(),
               nullable: false,
             ),
           },
@@ -893,7 +955,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['user'] as _i12.UserEndpoint).updateUserRole(
+                  (endpoints['user'] as _i13.UserEndpoint).updateUserRole(
                     session,
                     params['targetUserId'],
                     params['newRole'],
@@ -906,9 +968,28 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['user'] as _i12.UserEndpoint).getUserStats(
+              ) async => (endpoints['user'] as _i13.UserEndpoint).getUserStats(
                 session,
               ),
+        ),
+        'registerFcmToken': _i1.MethodConnector(
+          name: 'registerFcmToken',
+          params: {
+            'token': _i1.ParameterDescription(
+              name: 'token',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['user'] as _i13.UserEndpoint).registerFcmToken(
+                    session,
+                    params['token'],
+                  ),
         ),
       },
     );
@@ -929,17 +1010,17 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['greeting'] as _i13.GreetingEndpoint).hello(
+              ) async => (endpoints['greeting'] as _i14.GreetingEndpoint).hello(
                 session,
                 params['name'],
               ),
         ),
       },
     );
-    modules['serverpod_auth'] = _i21.Endpoints()..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i22.Endpoints()
+    modules['serverpod_auth'] = _i22.Endpoints()..initializeEndpoints(server);
+    modules['serverpod_auth_idp'] = _i23.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i23.Endpoints()
+    modules['serverpod_auth_core'] = _i24.Endpoints()
       ..initializeEndpoints(server);
   }
 }

@@ -19,16 +19,17 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
 import 'package:dwellly_client/src/protocol/user.dart' as _i5;
 import 'package:dwellly_client/src/protocol/booking.dart' as _i6;
 import 'package:dwellly_client/src/protocol/favorite.dart' as _i7;
-import 'package:dwellly_client/src/protocol/become_owner_request.dart' as _i8;
-import 'package:dwellly_client/src/protocol/owner_request_status.dart' as _i9;
-import 'package:dwellly_client/src/protocol/payment_request.dart' as _i10;
-import 'package:dwellly_client/src/protocol/room.dart' as _i11;
-import 'package:dwellly_client/src/protocol/room_type.dart' as _i12;
-import 'package:dwellly_client/src/protocol/room_status.dart' as _i13;
-import 'package:dwellly_client/src/protocol/user_role.dart' as _i14;
-import 'package:dwellly_client/src/protocol/greetings/greeting.dart' as _i15;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i16;
-import 'protocol.dart' as _i17;
+import 'package:dwellly_client/src/protocol/app_notification.dart' as _i8;
+import 'package:dwellly_client/src/protocol/become_owner_request.dart' as _i9;
+import 'package:dwellly_client/src/protocol/owner_request_status.dart' as _i10;
+import 'package:dwellly_client/src/protocol/payment_request.dart' as _i11;
+import 'package:dwellly_client/src/protocol/room.dart' as _i12;
+import 'package:dwellly_client/src/protocol/room_type.dart' as _i13;
+import 'package:dwellly_client/src/protocol/room_status.dart' as _i14;
+import 'package:dwellly_client/src/protocol/user_role.dart' as _i15;
+import 'package:dwellly_client/src/protocol/greetings/greeting.dart' as _i16;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i17;
+import 'protocol.dart' as _i18;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -361,6 +362,40 @@ class EndpointFavorite extends _i2.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointNotification extends _i2.EndpointRef {
+  EndpointNotification(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'notification';
+
+  _i3.Future<List<_i8.AppNotification>> getMyNotifications() =>
+      caller.callServerEndpoint<List<_i8.AppNotification>>(
+        'notification',
+        'getMyNotifications',
+        {},
+      );
+
+  _i3.Future<int> getUnreadCount() => caller.callServerEndpoint<int>(
+    'notification',
+    'getUnreadCount',
+    {},
+  );
+
+  _i3.Future<bool> markAsRead(int notificationId) =>
+      caller.callServerEndpoint<bool>(
+        'notification',
+        'markAsRead',
+        {'notificationId': notificationId},
+      );
+
+  _i3.Future<bool> markAllAsRead() => caller.callServerEndpoint<bool>(
+    'notification',
+    'markAllAsRead',
+    {},
+  );
+}
+
+/// {@category Endpoint}
 class EndpointOwnerRequest extends _i2.EndpointRef {
   EndpointOwnerRequest(_i2.EndpointCaller caller) : super(caller);
 
@@ -368,24 +403,24 @@ class EndpointOwnerRequest extends _i2.EndpointRef {
   String get name => 'ownerRequest';
 
   /// Submit a request to become an owner
-  _i3.Future<_i8.BecomeOwnerRequest?> submitRequest({String? message}) =>
-      caller.callServerEndpoint<_i8.BecomeOwnerRequest?>(
+  _i3.Future<_i9.BecomeOwnerRequest?> submitRequest({String? message}) =>
+      caller.callServerEndpoint<_i9.BecomeOwnerRequest?>(
         'ownerRequest',
         'submitRequest',
         {'message': message},
       );
 
   /// Get the current user's most recent owner request
-  _i3.Future<_i8.BecomeOwnerRequest?> getMyRequest() =>
-      caller.callServerEndpoint<_i8.BecomeOwnerRequest?>(
+  _i3.Future<_i9.BecomeOwnerRequest?> getMyRequest() =>
+      caller.callServerEndpoint<_i9.BecomeOwnerRequest?>(
         'ownerRequest',
         'getMyRequest',
         {},
       );
 
   /// Get all requests (Admin only)
-  _i3.Future<List<_i8.BecomeOwnerRequest>> getAllRequests() =>
-      caller.callServerEndpoint<List<_i8.BecomeOwnerRequest>>(
+  _i3.Future<List<_i9.BecomeOwnerRequest>> getAllRequests() =>
+      caller.callServerEndpoint<List<_i9.BecomeOwnerRequest>>(
         'ownerRequest',
         'getAllRequests',
         {},
@@ -394,7 +429,7 @@ class EndpointOwnerRequest extends _i2.EndpointRef {
   /// Update request status (Admin only)
   _i3.Future<bool> updateRequestStatus(
     int requestId,
-    _i9.OwnerRequestStatus status,
+    _i10.OwnerRequestStatus status,
   ) => caller.callServerEndpoint<bool>(
     'ownerRequest',
     'updateRequestStatus',
@@ -412,10 +447,10 @@ class EndpointPayment extends _i2.EndpointRef {
   @override
   String get name => 'payment';
 
-  _i3.Future<_i10.PaymentRequest?> createAbaPaymentRequest({
+  _i3.Future<_i11.PaymentRequest?> createAbaPaymentRequest({
     required double amount,
     required int roomId,
-  }) => caller.callServerEndpoint<_i10.PaymentRequest?>(
+  }) => caller.callServerEndpoint<_i11.PaymentRequest?>(
     'payment',
     'createAbaPaymentRequest',
     {
@@ -440,36 +475,36 @@ class EndpointRoom extends _i2.EndpointRef {
   String get name => 'room';
 
   /// Get all available rooms with owner info
-  _i3.Future<List<_i11.Room>> getRooms() =>
-      caller.callServerEndpoint<List<_i11.Room>>(
+  _i3.Future<List<_i12.Room>> getRooms() =>
+      caller.callServerEndpoint<List<_i12.Room>>(
         'room',
         'getRooms',
         {},
       );
 
   /// Get a specific room by ID with detailed info
-  _i3.Future<_i11.Room?> getRoomById(int id) =>
-      caller.callServerEndpoint<_i11.Room?>(
+  _i3.Future<_i12.Room?> getRoomById(int id) =>
+      caller.callServerEndpoint<_i12.Room?>(
         'room',
         'getRoomById',
         {'id': id},
       );
 
   /// Search rooms by title or location
-  _i3.Future<List<_i11.Room>> searchRooms(String query) =>
-      caller.callServerEndpoint<List<_i11.Room>>(
+  _i3.Future<List<_i12.Room>> searchRooms(String query) =>
+      caller.callServerEndpoint<List<_i12.Room>>(
         'room',
         'searchRooms',
         {'query': query},
       );
 
   /// Filter rooms by various criteria
-  _i3.Future<List<_i11.Room>> filterRooms({
+  _i3.Future<List<_i12.Room>> filterRooms({
     double? minPrice,
     double? maxPrice,
-    _i12.RoomType? type,
+    _i13.RoomType? type,
     double? minRating,
-  }) => caller.callServerEndpoint<List<_i11.Room>>(
+  }) => caller.callServerEndpoint<List<_i12.Room>>(
     'room',
     'filterRooms',
     {
@@ -480,24 +515,24 @@ class EndpointRoom extends _i2.EndpointRef {
     },
   );
 
-  _i3.Future<_i11.Room?> createRoom(_i11.Room room) =>
-      caller.callServerEndpoint<_i11.Room?>(
+  _i3.Future<_i12.Room?> createRoom(_i12.Room room) =>
+      caller.callServerEndpoint<_i12.Room?>(
         'room',
         'createRoom',
         {'room': room},
       );
 
   /// Owner/Admin: Get all rooms owned by the current user
-  _i3.Future<List<_i11.Room>> getMyRooms() =>
-      caller.callServerEndpoint<List<_i11.Room>>(
+  _i3.Future<List<_i12.Room>> getMyRooms() =>
+      caller.callServerEndpoint<List<_i12.Room>>(
         'room',
         'getMyRooms',
         {},
       );
 
   /// Admin: Get ALL rooms in the system, regardless of status or availability
-  _i3.Future<List<_i11.Room>> getAllRoomsAsAdmin() =>
-      caller.callServerEndpoint<List<_i11.Room>>(
+  _i3.Future<List<_i12.Room>> getAllRoomsAsAdmin() =>
+      caller.callServerEndpoint<List<_i12.Room>>(
         'room',
         'getAllRoomsAsAdmin',
         {},
@@ -506,8 +541,8 @@ class EndpointRoom extends _i2.EndpointRef {
   /// Admin/Owner: Get all pending rooms for review
   /// - Admin: sees ALL pending rooms in the system
   /// - Owner: sees only THEIR OWN pending rooms
-  _i3.Future<List<_i11.Room>> getPendingRooms() =>
-      caller.callServerEndpoint<List<_i11.Room>>(
+  _i3.Future<List<_i12.Room>> getPendingRooms() =>
+      caller.callServerEndpoint<List<_i12.Room>>(
         'room',
         'getPendingRooms',
         {},
@@ -517,7 +552,7 @@ class EndpointRoom extends _i2.EndpointRef {
   /// Owner can only update their own rooms; admin can update any.
   _i3.Future<bool> updateRoomStatus(
     int roomId,
-    _i13.RoomStatus status, {
+    _i14.RoomStatus status, {
     String? rejectionReason,
   }) => caller.callServerEndpoint<bool>(
     'room',
@@ -542,7 +577,7 @@ class EndpointRoom extends _i2.EndpointRef {
   /// - If the room is pending/rejected, changes are applied directly.
   _i3.Future<bool> requestRoomUpdate(
     int roomId,
-    _i11.Room updatedRoom,
+    _i12.Room updatedRoom,
   ) => caller.callServerEndpoint<bool>(
     'room',
     'requestRoomUpdate',
@@ -584,7 +619,7 @@ class EndpointUser extends _i2.EndpointRef {
   /// Fetch all users in the system (Admin only)
   _i3.Future<List<_i5.User>> getAllUsers({
     String? searchTerm,
-    _i14.UserRole? role,
+    _i15.UserRole? role,
   }) => caller.callServerEndpoint<List<_i5.User>>(
     'user',
     'getAllUsers',
@@ -597,7 +632,7 @@ class EndpointUser extends _i2.EndpointRef {
   /// Update a user's role (Admin only)
   _i3.Future<bool> updateUserRole(
     int targetUserId,
-    _i14.UserRole newRole,
+    _i15.UserRole newRole,
   ) => caller.callServerEndpoint<bool>(
     'user',
     'updateUserRole',
@@ -614,6 +649,14 @@ class EndpointUser extends _i2.EndpointRef {
         'getUserStats',
         {},
       );
+
+  /// Register/Update FCM token for the current user
+  _i3.Future<bool> registerFcmToken(String token) =>
+      caller.callServerEndpoint<bool>(
+        'user',
+        'registerFcmToken',
+        {'token': token},
+      );
 }
 
 /// This is an example endpoint that returns a greeting message through
@@ -626,8 +669,8 @@ class EndpointGreeting extends _i2.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i3.Future<_i15.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i15.Greeting>(
+  _i3.Future<_i16.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i16.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -636,12 +679,12 @@ class EndpointGreeting extends _i2.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    auth = _i16.Caller(client);
+    auth = _i17.Caller(client);
     serverpod_auth_idp = _i1.Caller(client);
     serverpod_auth_core = _i4.Caller(client);
   }
 
-  late final _i16.Caller auth;
+  late final _i17.Caller auth;
 
   late final _i1.Caller serverpod_auth_idp;
 
@@ -668,7 +711,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i17.Protocol(),
+         _i18.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -683,6 +726,7 @@ class Client extends _i2.ServerpodClientShared {
     booking = EndpointBooking(this);
     dev = EndpointDev(this);
     favorite = EndpointFavorite(this);
+    notification = EndpointNotification(this);
     ownerRequest = EndpointOwnerRequest(this);
     payment = EndpointPayment(this);
     room = EndpointRoom(this);
@@ -703,6 +747,8 @@ class Client extends _i2.ServerpodClientShared {
   late final EndpointDev dev;
 
   late final EndpointFavorite favorite;
+
+  late final EndpointNotification notification;
 
   late final EndpointOwnerRequest ownerRequest;
 
@@ -726,6 +772,7 @@ class Client extends _i2.ServerpodClientShared {
     'booking': booking,
     'dev': dev,
     'favorite': favorite,
+    'notification': notification,
     'ownerRequest': ownerRequest,
     'payment': payment,
     'room': room,

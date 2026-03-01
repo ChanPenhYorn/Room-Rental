@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_server/serverpod_auth_server.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
+import '../utils/notification_utils.dart';
 
 class UserEndpoint extends Endpoint {
   /// Fetch all users in the system (Admin only)
@@ -98,6 +99,19 @@ class UserEndpoint extends Endpoint {
       session.log(
         'Admin ${currentUser.id} updated user ${targetUser.id} role to ${newRole.name}',
       );
+
+      // Notify the user about the role change
+      session.log('Sending notification to user ${targetUser.id}...');
+      final result = await NotificationUtils.sendNotification(
+        session,
+        recipientId: targetUser.id!,
+        title: 'Account Role Updated',
+        body:
+            'Your account role has been updated to ${newRole.name.toUpperCase()}.',
+        data: {'type': 'role_change', 'new_role': newRole.name},
+      );
+      session.log('Notification result for user ${targetUser.id}: $result');
+
       return true;
     } catch (e, stack) {
       session.log(
@@ -144,6 +158,31 @@ class UserEndpoint extends Endpoint {
       };
     } catch (e) {
       return {};
+    }
+  }
+
+  /// Register/Update FCM token for the current user
+  Future<bool> registerFcmToken(Session session, String token) async {
+    try {
+      final user = await UserUtils.getOrCreateUser(session);
+      if (user == null) {
+        return false;
+      }
+
+      user.fcmToken = token;
+      await User.db.updateRow(session, user);
+
+      session.log(
+        'User ${user.id} registered FCM token: ${token.substring(0, 5)}...',
+      );
+      return true;
+    } catch (e, stack) {
+      session.log(
+        'registerFcmToken: Error: $e',
+        level: LogLevel.error,
+        stackTrace: stack,
+      );
+      return false;
     }
   }
 }

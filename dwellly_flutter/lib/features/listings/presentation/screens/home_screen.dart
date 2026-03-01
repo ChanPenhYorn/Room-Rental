@@ -5,6 +5,11 @@ import 'package:dwellly_flutter/features/bookings/presentation/screens/my_activi
 import 'package:dwellly_flutter/features/social/presentation/screens/chat_list_screen.dart';
 import 'package:dwellly_flutter/features/social/presentation/screens/favourites_screen.dart';
 import 'package:dwellly_flutter/features/social/presentation/screens/profile_screen.dart';
+import 'package:dwellly_client/room_rental_client.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
+import '../../../notifications/presentation/screens/notification_screen.dart';
+import '../../../../features/auth/presentation/providers/user_providers.dart';
+import '../../../../features/owner_request/presentation/providers/owner_request_providers.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/room_card.dart';
@@ -110,6 +115,86 @@ class HomeView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Listen for new notifications to show an alert and refresh stale state
+    ref.listen<AppNotification?>(newNotificationEventProvider, (
+      previous,
+      next,
+    ) {
+      if (next != null) {
+        // 1. Refresh relevant providers if it's a role or request change
+        final type = next.data?['type'];
+        if (type == 'role_change' || type == 'owner_request') {
+          print(
+            '🔔 [HomeView] Role/Request change detected, refreshing state...',
+          );
+          ref.invalidate(userProfileProvider);
+          ref.invalidate(myOwnerRequestProvider);
+          // Also refresh the notification list itself
+          ref.read(notificationsProvider.notifier).refresh();
+        }
+
+        // 2. Show SnackBar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: InkWell(
+              onTap: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationScreen(),
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.notifications_active,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          next.title,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          next.body,
+                          style: GoogleFonts.outfit(fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            backgroundColor: AppTheme.primaryGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        // Clear the event after showing
+        Future.microtask(
+          () => ref.read(newNotificationEventProvider.notifier).state = null,
+        );
+      }
+    });
+
     final roomsAsync = ref.watch(roomListProvider);
 
     return Scaffold(
@@ -162,17 +247,57 @@ class HomeView extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.notifications_none_outlined),
-                        onPressed: () {},
-                        color: AppTheme.primaryBlack,
-                      ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        // Watch notificationsProvider to trigger initialization and refresh
+                        ref.watch(notificationsProvider);
+                        final unreadCount = ref.watch(
+                          unreadNotificationCountProvider,
+                        );
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.notifications_none_outlined,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const NotificationScreen(),
+                                    ),
+                                  );
+                                },
+                                color: AppTheme.primaryBlack,
+                              ),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 8,
+                                    minHeight: 8,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -212,10 +337,14 @@ class HomeView extends ConsumerWidget {
                                 color: AppTheme.secondaryGray,
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                'Search room, apartment...',
-                                style: GoogleFonts.outfit(
-                                  color: AppTheme.secondaryGray,
+                              Expanded(
+                                child: Text(
+                                  'Search room, apartment...',
+                                  style: GoogleFonts.outfit(
+                                    color: AppTheme.secondaryGray,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

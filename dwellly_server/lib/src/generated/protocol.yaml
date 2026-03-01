@@ -22,6 +22,11 @@ favorite:
   - toggleFavorite:
   - getFavoriteRoomIds:
   - getUserFavorites:
+notification:
+  - getMyNotifications:
+  - getUnreadCount:
+  - markAsRead:
+  - markAllAsRead:
 ownerRequest:
   - submitRequest:
   - getMyRequest:
@@ -49,5 +54,6 @@ user:
   - getAllUsers:
   - updateUserRole:
   - getUserStats:
+  - registerFcmToken:
 greeting:
   - hello:

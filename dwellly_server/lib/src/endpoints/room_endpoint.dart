@@ -3,6 +3,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_server/serverpod_auth_server.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
+import '../utils/notification_utils.dart';
 
 class RoomEndpoint extends Endpoint {
   @override
@@ -101,6 +102,15 @@ class RoomEndpoint extends Endpoint {
     session.log(
       'createRoom: Room created with id=${createdRoom.id} for user=${user.id}',
     );
+
+    // Notify Admins
+    await NotificationUtils.notifyAdmins(
+      session,
+      title: 'New Room Listing',
+      body: '${user.fullName} has listed a new room: ${createdRoom.title}',
+      data: {'type': 'room_submission', 'roomId': createdRoom.id.toString()},
+    );
+
     return createdRoom;
   }
 
@@ -224,6 +234,23 @@ class RoomEndpoint extends Endpoint {
         }
       }
       await Room.db.updateRow(session, room);
+
+      // Notify Owner
+      await NotificationUtils.sendNotification(
+        session,
+        recipientId: room.ownerId,
+        title:
+            'Room ${status == RoomStatus.approved ? 'Approved' : 'Rejected'}',
+        body: status == RoomStatus.approved
+            ? 'Your room "${room.title}" has been approved and is now live!'
+            : 'Your room "${room.title}" was rejected: ${rejectionReason ?? 'No reason provided.'}',
+        data: {
+          'type': 'room_status',
+          'status': status.name,
+          'roomId': room.id.toString(),
+        },
+      );
+
       return true;
     }
 

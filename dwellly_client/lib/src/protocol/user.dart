@@ -31,6 +31,7 @@ abstract class User implements _i1.SerializableModel {
     this.bio,
     required this.role,
     this.profileImage,
+    this.fcmToken,
     required this.createdAt,
     this.rooms,
     this.bookings,
@@ -50,6 +51,7 @@ abstract class User implements _i1.SerializableModel {
     String? bio,
     required _i3.UserRole role,
     String? profileImage,
+    String? fcmToken,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -74,6 +76,7 @@ abstract class User implements _i1.SerializableModel {
       bio: jsonSerialization['bio'] as String?,
       role: _i3.UserRole.fromJson((jsonSerialization['role'] as String)),
       profileImage: jsonSerialization['profileImage'] as String?,
+      fcmToken: jsonSerialization['fcmToken'] as String?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -131,6 +134,8 @@ abstract class User implements _i1.SerializableModel {
 
   String? profileImage;
 
+  String? fcmToken;
+
   DateTime createdAt;
 
   List<_i4.Room>? rooms;
@@ -158,6 +163,7 @@ abstract class User implements _i1.SerializableModel {
     String? bio,
     _i3.UserRole? role,
     String? profileImage,
+    String? fcmToken,
     DateTime? createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -179,6 +185,7 @@ abstract class User implements _i1.SerializableModel {
       if (bio != null) 'bio': bio,
       'role': role.toJson(),
       if (profileImage != null) 'profileImage': profileImage,
+      if (fcmToken != null) 'fcmToken': fcmToken,
       'createdAt': createdAt.toJson(),
       if (rooms != null) 'rooms': rooms?.toJson(valueToJson: (v) => v.toJson()),
       if (bookings != null)
@@ -215,6 +222,7 @@ class _UserImpl extends User {
     String? bio,
     required _i3.UserRole role,
     String? profileImage,
+    String? fcmToken,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -232,6 +240,7 @@ class _UserImpl extends User {
          bio: bio,
          role: role,
          profileImage: profileImage,
+         fcmToken: fcmToken,
          createdAt: createdAt,
          rooms: rooms,
          bookings: bookings,
@@ -255,6 +264,7 @@ class _UserImpl extends User {
     Object? bio = _Undefined,
     _i3.UserRole? role,
     Object? profileImage = _Undefined,
+    Object? fcmToken = _Undefined,
     DateTime? createdAt,
     Object? rooms = _Undefined,
     Object? bookings = _Undefined,
@@ -275,6 +285,7 @@ class _UserImpl extends User {
       bio: bio is String? ? bio : this.bio,
       role: role ?? this.role,
       profileImage: profileImage is String? ? profileImage : this.profileImage,
+      fcmToken: fcmToken is String? ? fcmToken : this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
       rooms: rooms is List<_i4.Room>?
           ? rooms

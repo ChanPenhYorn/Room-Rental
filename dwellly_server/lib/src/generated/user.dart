@@ -32,6 +32,7 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     this.bio,
     required this.role,
     this.profileImage,
+    this.fcmToken,
     required this.createdAt,
     this.rooms,
     this.bookings,
@@ -51,6 +52,7 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     String? bio,
     required _i3.UserRole role,
     String? profileImage,
+    String? fcmToken,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -75,6 +77,7 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       bio: jsonSerialization['bio'] as String?,
       role: _i3.UserRole.fromJson((jsonSerialization['role'] as String)),
       profileImage: jsonSerialization['profileImage'] as String?,
+      fcmToken: jsonSerialization['fcmToken'] as String?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -134,6 +137,8 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   String? profileImage;
 
+  String? fcmToken;
+
   DateTime createdAt;
 
   List<_i4.Room>? rooms;
@@ -164,6 +169,7 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     String? bio,
     _i3.UserRole? role,
     String? profileImage,
+    String? fcmToken,
     DateTime? createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -185,6 +191,7 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       if (bio != null) 'bio': bio,
       'role': role.toJson(),
       if (profileImage != null) 'profileImage': profileImage,
+      if (fcmToken != null) 'fcmToken': fcmToken,
       'createdAt': createdAt.toJson(),
       if (rooms != null) 'rooms': rooms?.toJson(valueToJson: (v) => v.toJson()),
       if (bookings != null)
@@ -215,6 +222,7 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       if (bio != null) 'bio': bio,
       'role': role.toJson(),
       if (profileImage != null) 'profileImage': profileImage,
+      if (fcmToken != null) 'fcmToken': fcmToken,
       'createdAt': createdAt.toJson(),
       if (rooms != null)
         'rooms': rooms?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
@@ -296,6 +304,7 @@ class _UserImpl extends User {
     String? bio,
     required _i3.UserRole role,
     String? profileImage,
+    String? fcmToken,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -313,6 +322,7 @@ class _UserImpl extends User {
          bio: bio,
          role: role,
          profileImage: profileImage,
+         fcmToken: fcmToken,
          createdAt: createdAt,
          rooms: rooms,
          bookings: bookings,
@@ -336,6 +346,7 @@ class _UserImpl extends User {
     Object? bio = _Undefined,
     _i3.UserRole? role,
     Object? profileImage = _Undefined,
+    Object? fcmToken = _Undefined,
     DateTime? createdAt,
     Object? rooms = _Undefined,
     Object? bookings = _Undefined,
@@ -356,6 +367,7 @@ class _UserImpl extends User {
       bio: bio is String? ? bio : this.bio,
       role: role ?? this.role,
       profileImage: profileImage is String? ? profileImage : this.profileImage,
+      fcmToken: fcmToken is String? ? fcmToken : this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
       rooms: rooms is List<_i4.Room>?
           ? rooms
@@ -419,6 +431,11 @@ class UserUpdateTable extends _i1.UpdateTable<UserTable> {
         value,
       );
 
+  _i1.ColumnValue<String, String> fcmToken(String? value) => _i1.ColumnValue(
+    table.fcmToken,
+    value,
+  );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -458,6 +475,10 @@ class UserTable extends _i1.Table<int?> {
       'profileImage',
       this,
     );
+    fcmToken = _i1.ColumnString(
+      'fcmToken',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -481,6 +502,8 @@ class UserTable extends _i1.Table<int?> {
   late final _i1.ColumnEnum<_i3.UserRole> role;
 
   late final _i1.ColumnString profileImage;
+
+  late final _i1.ColumnString fcmToken;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -723,6 +746,7 @@ class UserTable extends _i1.Table<int?> {
     bio,
     role,
     profileImage,
+    fcmToken,
     createdAt,
   ];
 

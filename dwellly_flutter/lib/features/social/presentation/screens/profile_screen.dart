@@ -12,251 +12,235 @@ import 'package:dwellly_flutter/features/admin/presentation/screens/admin_dashbo
 import 'package:dwellly_flutter/features/owner/presentation/screens/owner_dashboard_screen.dart';
 import 'package:dwellly_flutter/features/owner_request/presentation/screens/become_owner_screen.dart';
 import 'package:dwellly_flutter/features/owner_request/presentation/providers/owner_request_providers.dart';
+import '../../../../features/auth/presentation/providers/user_providers.dart';
 
 /// Profile Screen
 /// Displays user profile details and settings
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  User? _userProfile;
-  bool _isLoadingProfile = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    try {
-      final repository = ref.read(authRepositoryProvider);
-      final client = repository.authenticatedClient;
-      final user = await client.auth.getMyProfile();
-      if (mounted) {
-        setState(() {
-          _userProfile = user;
-          _isLoadingProfile = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoadingProfile = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
+    final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.surfaceWhite,
       body: RefreshIndicator(
-        onRefresh: _loadProfile,
+        onRefresh: () async => ref.invalidate(userProfileProvider),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              // Header with Profile Picture
-              _buildHeader(context, authState),
+          child: profileAsync.when(
+            data: (userProfile) => Column(
+              children: [
+                // Header with Profile Picture
+                _buildHeader(context, authState, userProfile),
 
-              // Profile Options
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionTitle('Hosting'),
-                    const SizedBox(height: 12),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.add_home_work_outlined,
-                      title: 'List a Property',
-                      subtitle: 'Add a new room or apartment',
-                      onTap: () {
-                        if (_userProfile?.role == UserRole.tenant) {
-                          _showBecomeOwnerDialog(context);
-                        } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const AddPropertyWizardScreen(),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    if (_userProfile?.role == UserRole.tenant) ...[
-                      const SizedBox(height: 12),
-                      Consumer(
-                        builder: (context, ref, child) {
-                          final requestAsync = ref.watch(
-                            myOwnerRequestProvider,
-                          );
-                          return requestAsync.when(
-                            data: (request) {
-                              final isPending =
-                                  request?.status == OwnerRequestStatus.pending;
-                              return _buildOptionItem(
-                                context,
-                                icon: Icons.real_estate_agent_outlined,
-                                title: isPending
-                                    ? 'Request Pending'
-                                    : 'Become an Owner',
-                                subtitle: isPending
-                                    ? 'Your application is being reviewed'
-                                    : 'Start listing your properties today',
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const BecomeOwnerScreen(),
-                                  ),
-                                ),
-                              );
-                            },
-                            loading: () => const LinearProgressIndicator(),
-                            error: (e, _) => const SizedBox.shrink(),
-                          );
-                        },
-                      ),
-                    ],
-                    if (_userProfile?.role == UserRole.admin ||
-                        _userProfile?.role == UserRole.owner) ...[
-                      const SizedBox(height: 24),
-                      _buildSectionTitle('Administration'),
+                // Profile Options
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle('Hosting'),
                       const SizedBox(height: 12),
                       _buildOptionItem(
                         context,
-                        icon: Icons.admin_panel_settings_outlined,
-                        title: _userProfile?.role == UserRole.admin
-                            ? 'Admin Dashboard'
-                            : 'Owner Dashboard',
-                        subtitle: 'Manage and review property listings',
+                        icon: Icons.add_home_work_outlined,
+                        title: 'List a Property',
+                        subtitle: 'Add a new room or apartment',
                         onTap: () {
-                          if (_userProfile?.role == UserRole.admin) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const AdminDashboardScreen(),
-                              ),
-                            );
+                          if (userProfile?.role == UserRole.tenant) {
+                            _showBecomeOwnerDialog(context);
                           } else {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const OwnerDashboardScreen(),
+                                builder: (_) => const AddPropertyWizardScreen(),
                               ),
                             );
                           }
                         },
                       ),
-                    ],
-                    const SizedBox(height: 24),
-
-                    _buildSectionTitle('Account Settings'),
-                    const SizedBox(height: 12),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.person_outline,
-                      title: 'Personal Information',
-                      subtitle: 'Name, Email, Phone',
-                      onTap: () async {
-                        await Navigator.push(
+                      if (userProfile?.role == UserRole.tenant) ...[
+                        const SizedBox(height: 12),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final requestAsync = ref.watch(
+                              myOwnerRequestProvider,
+                            );
+                            return requestAsync.when(
+                              data: (request) {
+                                final isPending =
+                                    request?.status ==
+                                    OwnerRequestStatus.pending;
+                                return _buildOptionItem(
+                                  context,
+                                  icon: Icons.real_estate_agent_outlined,
+                                  title: isPending
+                                      ? 'Request Pending'
+                                      : 'Become an Owner',
+                                  subtitle: isPending
+                                      ? 'Your application is being reviewed'
+                                      : 'Start listing your properties today',
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const BecomeOwnerScreen(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              loading: () => const LinearProgressIndicator(),
+                              error: (e, _) => const SizedBox.shrink(),
+                            );
+                          },
+                        ),
+                      ],
+                      if (userProfile?.role == UserRole.admin ||
+                          userProfile?.role == UserRole.owner) ...[
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('Administration'),
+                        const SizedBox(height: 12),
+                        _buildOptionItem(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const PersonalInformationScreen(),
+                          icon: Icons.admin_panel_settings_outlined,
+                          title: userProfile?.role == UserRole.admin
+                              ? 'Admin Dashboard'
+                              : 'Owner Dashboard',
+                          subtitle: 'Manage and review property listings',
+                          onTap: () {
+                            if (userProfile?.role == UserRole.admin) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AdminDashboardScreen(),
+                                ),
+                              );
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const OwnerDashboardScreen(),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+
+                      _buildSectionTitle('Account Settings'),
+                      const SizedBox(height: 12),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.person_outline,
+                        title: 'Personal Information',
+                        subtitle: 'Name, Email, Phone',
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PersonalInformationScreen(),
+                            ),
+                          );
+                          // Refresh profile after returning from edit screen
+                          ref.invalidate(userProfileProvider);
+                        },
+                      ),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.security,
+                        title: 'Security',
+                        subtitle: 'Password, 2FA',
+                        onTap: () {},
+                      ),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.payment,
+                        title: 'Payment Methods',
+                        subtitle: 'Cards, Bank Accounts',
+                        onTap: () {},
+                      ),
+
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('App Settings'),
+                      const SizedBox(height: 12),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.notifications_outlined,
+                        title: 'Notifications',
+                        subtitle: 'Push, Email, SMS',
+                        onTap: () {},
+                      ),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.language,
+                        title: 'Language',
+                        subtitle: 'English (US)',
+                        onTap: () {},
+                      ),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.dark_mode_outlined,
+                        title: 'Theme',
+                        subtitle: 'System Default',
+                        onTap: () {},
+                      ),
+
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Support'),
+                      const SizedBox(height: 12),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.help_outline,
+                        title: 'Help Center',
+                        subtitle: 'FAQ, Contact Support',
+                        onTap: () {},
+                      ),
+                      _buildOptionItem(
+                        context,
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Privacy Policy',
+                        subtitle: 'Read our privacy policy',
+                        onTap: () {},
+                      ),
+
+                      const SizedBox(height: 32),
+                      _buildLogoutButton(context, ref),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: Text(
+                          'Version 1.0.0',
+                          style: GoogleFonts.outfit(
+                            color: AppTheme.secondaryGray,
+                            fontSize: 12,
                           ),
-                        );
-                        // Refresh profile after returning from edit screen
-                        _loadProfile();
-                      },
-                    ),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.security,
-                      title: 'Security',
-                      subtitle: 'Password, 2FA',
-                      onTap: () {},
-                    ),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.payment,
-                      title: 'Payment Methods',
-                      subtitle: 'Cards, Bank Accounts',
-                      onTap: () {},
-                    ),
-
-                    const SizedBox(height: 24),
-                    _buildSectionTitle('App Settings'),
-                    const SizedBox(height: 12),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.notifications_outlined,
-                      title: 'Notifications',
-                      subtitle: 'Push, Email, SMS',
-                      onTap: () {},
-                    ),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.language,
-                      title: 'Language',
-                      subtitle: 'English (US)',
-                      onTap: () {},
-                    ),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.dark_mode_outlined,
-                      title: 'Theme',
-                      subtitle: 'System Default',
-                      onTap: () {},
-                    ),
-
-                    const SizedBox(height: 24),
-                    _buildSectionTitle('Support'),
-                    const SizedBox(height: 12),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.help_outline,
-                      title: 'Help Center',
-                      subtitle: 'FAQ, Contact Support',
-                      onTap: () {},
-                    ),
-                    _buildOptionItem(
-                      context,
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'Privacy Policy',
-                      subtitle: 'Read our privacy policy',
-                      onTap: () {},
-                    ),
-
-                    const SizedBox(height: 32),
-                    _buildLogoutButton(context, ref),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: Text(
-                        'Version 1.0.0',
-                        style: GoogleFonts.outfit(
-                          color: AppTheme.secondaryGray,
-                          fontSize: 12,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+              ],
+            ),
+            loading: () => const SizedBox(
+              height: 500,
+              child: Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryGreen),
               ),
-            ],
+            ),
+            error: (e, _) => Center(child: Text('Error: $e')),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, AuthState authState) {
+  Widget _buildHeader(
+    BuildContext context,
+    AuthState authState,
+    User? userProfile,
+  ) {
     return authState.when(
       initial: () => const SizedBox(
         height: 250,
@@ -278,14 +262,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       authenticated: (userInfo) {
         // Use full profile data if available, fallback to basic userInfo
         final displayName =
-            _userProfile?.fullName ?? userInfo.fullName ?? 'User';
+            userProfile?.fullName ?? userInfo.fullName ?? 'User';
         final displayImageUrl =
-            _userProfile?.profileImage ??
+            userProfile?.profileImage ??
             userInfo.imageUrl ??
             'https://i.pravatar.cc/150?u=${userInfo.userIdentifier}';
-        final roleName = _isLoadingProfile
-            ? '...'
-            : (_userProfile?.role.name.toUpperCase() ?? 'TENANT');
+        final roleName = userProfile?.role.name.toUpperCase() ?? 'TENANT';
 
         return Container(
           width: double.infinity,
@@ -323,25 +305,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Positioned(
                     bottom: 0,
                     right: 0,
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PersonalInformationScreen(),
-                        ),
-                      ).then((_) => _loadProfile()),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primaryGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PersonalInformationScreen(),
+                            ),
+                          ).then((_) => ref.invalidate(userProfileProvider)),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primaryGreen,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
