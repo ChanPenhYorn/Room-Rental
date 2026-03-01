@@ -13,6 +13,9 @@ class NotificationDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      '🧐 [NotificationDetailScreen] building with data: ${notification.data}',
+    );
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
