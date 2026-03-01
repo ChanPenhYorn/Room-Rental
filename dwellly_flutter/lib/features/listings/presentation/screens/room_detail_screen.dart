@@ -299,97 +299,94 @@ class RoomDetailScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Price',
-                          style: GoogleFonts.outfit(
-                            color: Colors.grey[500],
-                            fontSize: 12,
-                          ),
+              child: Row(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Price',
+                        style: GoogleFonts.outfit(
+                          color: Colors.grey[500],
+                          fontSize: 12,
                         ),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: '\$${room.price.toInt()}',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).primaryColor,
-                                ),
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '\$${room.price.toInt()}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
                               ),
-                              TextSpan(
-                                text: ' / month',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Convert RoomEntity to Room for booking
-                          final roomModel = Room(
-                            id: room.id,
-                            title: room.title,
-                            description: room.description,
-                            price: room.price,
-                            location: room.location,
-                            latitude: room.latitude,
-                            longitude: room.longitude,
-                            imageUrl: room.imageUrl,
-                            images: room.images,
-                            rating: room.rating,
-                            isAvailable: room.isAvailable,
-                            ownerId: 1, // Default owner
-                            createdAt: DateTime.now(),
-                            type: room.type,
-                            status: RoomStatus.approved,
-                          );
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  BookingDateScreen(room: roomModel),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 8,
-                          shadowColor: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.4),
+                            TextSpan(
+                              text: ' / month',
+                              style: GoogleFonts.outfit(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          'Book Now',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Convert RoomEntity to Room for booking
+                        final roomModel = Room(
+                          id: room.id,
+                          title: room.title,
+                          description: room.description,
+                          price: room.price,
+                          location: room.location,
+                          latitude: room.latitude,
+                          longitude: room.longitude,
+                          imageUrl: room.imageUrl,
+                          images: room.images,
+                          rating: room.rating,
+                          isAvailable: room.isAvailable,
+                          ownerId: 1, // Default owner
+                          createdAt: DateTime.now(),
+                          type: room.type,
+                          status: RoomStatus.approved,
+                        );
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BookingDateScreen(room: roomModel),
                           ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 8,
+                        shadowColor: Theme.of(
+                          context,
+                        ).primaryColor.withOpacity(0.4),
+                      ),
+                      child: Text(
+                        'Book Now',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
