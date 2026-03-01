@@ -899,8 +899,18 @@ class _OwnerRequestCard extends ConsumerWidget {
           Row(
             children: [
               CircleAvatar(
+                radius: 20,
                 backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
-                child: const Icon(Icons.person, color: AppTheme.primaryGreen),
+                backgroundImage: request.user?.profileImage != null
+                    ? NetworkImage(request.user!.profileImage!)
+                    : (request.user?.userInfo?.imageUrl != null
+                          ? NetworkImage(request.user!.userInfo!.imageUrl!)
+                          : null),
+                child:
+                    (request.user?.profileImage == null &&
+                        request.user?.userInfo?.imageUrl == null)
+                    ? const Icon(Icons.person, color: AppTheme.primaryGreen)
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -915,7 +925,17 @@ class _OwnerRequestCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      request.user?.userInfo?.email ?? 'No email',
+                      request.user?.userInfo?.email ??
+                          (request.user?.userInfo?.userIdentifier != null &&
+                                  request
+                                          .user!
+                                          .userInfo!
+                                          .userIdentifier
+                                          .length >
+                                      10
+                              ? 'ID: #${request.user!.userInfo!.userIdentifier.substring(0, 8)}...'
+                              : (request.user?.userInfo?.userIdentifier ??
+                                    'No identifier')),
                       style: GoogleFonts.outfit(
                         color: AppTheme.secondaryGray,
                         fontSize: 13,
@@ -1047,11 +1067,14 @@ class _OwnerRequestCard extends ConsumerWidget {
         title: Row(
           children: [
             CircleAvatar(
-              radius: 20,
+              radius: 22,
               backgroundImage: user.profileImage != null
                   ? NetworkImage(user.profileImage!)
-                  : null,
-              child: user.profileImage == null
+                  : (user.userInfo?.imageUrl != null
+                        ? NetworkImage(user.userInfo!.imageUrl!)
+                        : null),
+              child:
+                  (user.profileImage == null && user.userInfo?.imageUrl == null)
                   ? const Icon(Icons.person)
                   : null,
             ),

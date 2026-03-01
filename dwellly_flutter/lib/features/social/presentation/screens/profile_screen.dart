@@ -79,12 +79,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       title: 'List a Property',
                       subtitle: 'Add a new room or apartment',
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AddPropertyWizardScreen(),
-                          ),
-                        );
+                        if (_userProfile?.role == UserRole.tenant) {
+                          _showBecomeOwnerDialog(context);
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AddPropertyWizardScreen(),
+                            ),
+                          );
+                        }
                       },
                     ),
                     if (_userProfile?.role == UserRole.tenant) ...[
@@ -353,7 +357,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                userInfo.email ?? userInfo.userIdentifier,
+                userInfo.email ??
+                    (userInfo.userIdentifier.length > 10
+                        ? 'ID: #${userInfo.userIdentifier.substring(0, 8)}...'
+                        : userInfo.userIdentifier),
                 style: GoogleFonts.outfit(
                   fontSize: 14,
                   color: AppTheme.secondaryGray,
@@ -536,6 +543,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: Colors.red,
           ),
         ),
+      ),
+    );
+  }
+
+  void _showBecomeOwnerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: AppTheme.primaryGreen),
+            const SizedBox(width: 12),
+            const Text('Become an Owner'),
+          ],
+        ),
+        content: const Text(
+          'To list a property, you need to be an owner. Would you like to submit a request to become an owner now?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Later',
+              style: GoogleFonts.outfit(color: AppTheme.secondaryGray),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BecomeOwnerScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Apply Now',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

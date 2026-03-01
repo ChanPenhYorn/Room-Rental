@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_server/serverpod_auth_server.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
 
@@ -73,7 +74,9 @@ class OwnerRequestEndpoint extends Endpoint {
 
     return await BecomeOwnerRequest.db.find(
       session,
-      include: BecomeOwnerRequest.include(user: User.include()),
+      include: BecomeOwnerRequest.include(
+        user: User.include(userInfo: UserInfo.include()),
+      ),
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
