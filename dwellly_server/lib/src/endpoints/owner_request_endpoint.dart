@@ -13,17 +13,17 @@ class OwnerRequestEndpoint extends Endpoint {
     Session session, {
     String? message,
   }) async {
-    session.log(
-      'OwnerRequestEndpoint: Starting submitRequest for message: $message',
-    );
+    session.log('🚀 [OwnerRequestEndpoint] Starting submitRequest');
     final user = await UserUtils.getOrCreateUser(session);
     if (user == null) {
-      session.log('OwnerRequestEndpoint: User profile not found');
+      session.log('❌ [OwnerRequestEndpoint] User profile not found');
       return null;
     }
-    session.log('OwnerRequestEndpoint: Found user id: ${user.id}');
+    session.log(
+      '👤 [OwnerRequestEndpoint] User: id=${user.id}, role=${user.role.name}',
+    );
 
-    // Check if there's already a pending or approved request
+    // Check for previous requests
     final existingRequest = await BecomeOwnerRequest.db.findFirstRow(
       session,
       where: (t) => t.userId.equals(user.id!),
@@ -31,20 +31,33 @@ class OwnerRequestEndpoint extends Endpoint {
       orderDescending: true,
     );
 
-    // If they are already an owner, return the approved request if it exists
+    if (existingRequest != null) {
+      session.log(
+        '📄 [OwnerRequestEndpoint] Existing request: id=${existingRequest.id}, status=${existingRequest.status.name}',
+      );
+    } else {
+      session.log('📄 [OwnerRequestEndpoint] No previous requests found');
+    }
+
+    // Logic for Owners
     if (user.role == UserRole.owner) {
-      session.log('OwnerRequestEndpoint: User is already an owner');
+      session.log(
+        '✅ [OwnerRequestEndpoint] User is already an owner. Returning existing/null.',
+      );
       return existingRequest;
     }
 
-    // If they are a tenant, only block if there is a PENDING request
+    // Logic for Tenants: Block ONLY if there's a PENDING request
     if (existingRequest != null &&
         existingRequest.status == OwnerRequestStatus.pending) {
-      session.log('OwnerRequestEndpoint: Returning existing pending request');
+      session.log(
+        '⚠️ [OwnerRequestEndpoint] User has a PENDING request. Returning existing.',
+      );
       return existingRequest;
     }
 
-    session.log('OwnerRequestEndpoint: Inserting new request');
+    // Otherwise (Tenant with Approved, Rejected, or No requests), allow new submission
+    session.log('➕ [OwnerRequestEndpoint] Creating NEW pending request...');
     final request = BecomeOwnerRequest(
       userId: user.id!,
       message: message,
@@ -54,15 +67,25 @@ class OwnerRequestEndpoint extends Endpoint {
     );
 
     final inserted = await BecomeOwnerRequest.db.insertRow(session, request);
-    session.log('OwnerRequestEndpoint: Inserted request id: ${inserted.id}');
+    session.log(
+      '🚀 [OwnerRequestEndpoint] Inserted NEW request: id=${inserted.id}',
+    );
 
     // Notify Admins
-    await NotificationUtils.notifyAdmins(
-      session,
-      title: 'New Owner Request',
-      body: '${user.fullName} has requested to become an owner.',
-      data: {'type': 'owner_request', 'requestId': inserted.id.toString()},
-    );
+    try {
+      await NotificationUtils.notifyAdmins(
+        session,
+        title: 'New Owner Request',
+        body: '${user.fullName} has requested to become an owner.',
+        data: {'type': 'owner_request', 'requestId': inserted.id.toString()},
+      );
+      session.log('🔔 [OwnerRequestEndpoint] Admin notification sent');
+    } catch (e) {
+      session.log(
+        '❌ [OwnerRequestEndpoint] Notification failed: $e',
+        level: LogLevel.warning,
+      );
+    }
 
     return inserted;
   }
