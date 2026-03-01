@@ -25,23 +25,37 @@ class _BecomeOwnerScreenState extends ConsumerState<BecomeOwnerScreen> {
   }
 
   Future<void> _submit() async {
+    print('🚀 [BecomeOwnerScreen] Starting submission flow...');
     setState(() => _isSubmitting = true);
 
-    final success = await ref
-        .read(ownerRequestControllerProvider.notifier)
-        .submitRequest(message: _messageController.text.trim());
+    try {
+      final success = await ref
+          .read(ownerRequestControllerProvider.notifier)
+          .submitRequest(message: _messageController.text.trim());
+      print('🚀 [BecomeOwnerScreen] Submission result: $success');
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (success) {
-        setState(() => _showSubmitViewOverride = false);
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        if (success) {
+          print('🚀 [BecomeOwnerScreen] Success! Closing screen.');
+          setState(() => _showSubmitViewOverride = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Request submitted successfully!')),
+          );
+          Navigator.pop(context);
+        } else {
+          print('🚀 [BecomeOwnerScreen] Submission failed (success=false).');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to submit request.')),
+          );
+        }
+      }
+    } catch (e) {
+      print('🚀 [BecomeOwnerScreen] Exception during submission: $e');
+      if (mounted) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Request submitted successfully!')),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to submit request.')),
+          SnackBar(content: Text('Error: $e')),
         );
       }
     }
