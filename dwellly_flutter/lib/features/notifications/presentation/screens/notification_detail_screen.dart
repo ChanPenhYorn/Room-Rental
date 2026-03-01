@@ -126,7 +126,8 @@ class NotificationDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (notification.data!['type'] == 'room_listing_request')
+              if (notification.data!['type'] == 'room_listing_request' ||
+                  notification.data!['type'] == 'room_submission')
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
