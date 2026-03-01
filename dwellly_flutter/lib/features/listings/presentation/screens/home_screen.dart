@@ -129,6 +129,7 @@ class HomeView extends ConsumerWidget {
           );
           ref.invalidate(userProfileProvider);
           ref.invalidate(myOwnerRequestProvider);
+          ref.invalidate(allOwnerRequestsProvider);
           // Also refresh the notification list itself
           ref.read(notificationsProvider.notifier).refresh();
         }
