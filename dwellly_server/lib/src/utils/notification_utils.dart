@@ -124,7 +124,6 @@ class NotificationUtils {
             'priority': 'high',
             'notification': {
               'channel_id': 'high_importance_channel',
-              'priority': 'high',
               'sound': 'default',
             },
           },
