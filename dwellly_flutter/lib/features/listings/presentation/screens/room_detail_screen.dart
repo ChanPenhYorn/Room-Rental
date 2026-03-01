@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
@@ -34,7 +35,7 @@ class RoomDetailScreen extends ConsumerWidget {
                     fit: StackFit.expand,
                     children: [
                       if (room.imageUrl != null)
-                        Image.network(
+                        _buildImageWidget(
                           room.imageUrl!,
                           fit: BoxFit.cover,
                         )
@@ -262,7 +263,7 @@ class RoomDetailScreen extends ConsumerWidget {
                                   padding: const EdgeInsets.only(right: 12),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
+                                    child: _buildImageWidget(
                                       room.images[index],
                                       width: 140,
                                       height: 100,
@@ -394,6 +395,43 @@ class RoomDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildImageWidget(
+    String path, {
+    double? width,
+    double? height,
+    BoxFit? fit,
+  }) {
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return Image.network(
+        path,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) =>
+            _buildPlaceholder(width: width, height: height),
+      );
+    } else {
+      final cleanPath = path.replaceFirst('file://', '');
+      return Image.file(
+        File(cleanPath),
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) =>
+            _buildPlaceholder(width: width, height: height),
+      );
+    }
+  }
+
+  Widget _buildPlaceholder({double? width, double? height}) {
+    return Container(
+      width: width ?? double.infinity,
+      height: height ?? double.infinity,
+      color: Colors.grey[300],
+      child: const Icon(Icons.broken_image, color: Colors.grey),
     );
   }
 }
