@@ -623,7 +623,14 @@ class _ActionRow extends ConsumerWidget {
             ),
             onPressed: () {
               final val = reasonController.text.trim();
-              if (val.isEmpty) return;
+              if (val.isEmpty) {
+                _showSnack(
+                  context,
+                  'Please provide a rejection reason.',
+                  Colors.red,
+                );
+                return;
+              }
               Navigator.pop(ctx);
               _updateStatus(
                 context,

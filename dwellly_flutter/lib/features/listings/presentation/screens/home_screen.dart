@@ -125,13 +125,20 @@ class HomeView extends ConsumerWidget {
         final type = next.data?['type'];
         if (type == 'role_change' ||
             type == 'owner_request' ||
-            type == 'owner_request_status') {
+            type == 'owner_request_status' ||
+            type == 'room_status' ||
+            type == 'room_submission') {
           print(
-            '🔔 [HomeView] Role/Request change detected (type: $type), refreshing state...',
+            '🔔 [HomeView] Role/Request/Room change detected (type: $type), refreshing state...',
           );
           ref.invalidate(userProfileProvider);
           ref.invalidate(myOwnerRequestProvider);
           ref.invalidate(allOwnerRequestsProvider);
+
+          ref.invalidate(myRoomsProvider);
+          ref.invalidate(adminRoomsProvider);
+          ref.invalidate(pendingRoomsProvider);
+
           // Also refresh the notification list itself
           ref.read(notificationsProvider.notifier).refresh();
         }
