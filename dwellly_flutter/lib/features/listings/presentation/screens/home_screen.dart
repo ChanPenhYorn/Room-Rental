@@ -123,9 +123,11 @@ class HomeView extends ConsumerWidget {
       if (next != null) {
         // 1. Refresh relevant providers if it's a role or request change
         final type = next.data?['type'];
-        if (type == 'role_change' || type == 'owner_request') {
+        if (type == 'role_change' ||
+            type == 'owner_request' ||
+            type == 'owner_request_status') {
           print(
-            '🔔 [HomeView] Role/Request change detected, refreshing state...',
+            '🔔 [HomeView] Role/Request change detected (type: $type), refreshing state...',
           );
           ref.invalidate(userProfileProvider);
           ref.invalidate(myOwnerRequestProvider);
