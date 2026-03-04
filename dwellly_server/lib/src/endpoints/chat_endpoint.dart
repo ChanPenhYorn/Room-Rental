@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
+import '../utils/notification_utils.dart';
 
 class ChatEndpoint extends Endpoint {
   @override
@@ -57,10 +58,24 @@ class ChatEndpoint extends Endpoint {
       );
 
       if (fullMessage != null) {
-        // Broadcast the message to the recipient's private channel
+        // Broadcast the message to the recipient's private channel (WebSockets)
         session.messages.postMessage(
           'channel_user_$receiverId',
           fullMessage,
+        );
+
+        // Send Push Notification (FCM)
+        await NotificationUtils.sendNotification(
+          session,
+          recipientId: receiverId,
+          title: 'New Message from ${fullMessage.sender?.fullName ?? "User"}',
+          body: content,
+          data: {
+            'type': 'chat',
+            'senderId': fullMessage.senderId.toString(),
+            'senderName': fullMessage.sender?.fullName ?? "User",
+            'senderAvatar': fullMessage.sender?.profileImage ?? "",
+          },
         );
       }
     }

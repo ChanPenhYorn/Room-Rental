@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dwellly_flutter/main.dart';
 import '../../features/notifications/presentation/screens/notification_detail_screen.dart';
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/social/presentation/screens/chat_detail_screen.dart';
 
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
@@ -181,6 +182,23 @@ class NotificationService {
             builder: (_) => const AdminDashboardScreen(initialIndex: 0),
           ),
         );
+      } else if (type == 'chat') {
+        final senderId = int.tryParse(message.data['senderId'] ?? '0') ?? 0;
+        final senderName = message.data['senderName'] ?? 'Property Host';
+        final senderAvatar = message.data['senderAvatar'] ?? '';
+
+        if (senderId != 0) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => ChatDetailScreen(
+                userId: senderId,
+                userName: senderName,
+                avatarUrl: senderAvatar,
+                isOnline: true,
+              ),
+            ),
+          );
+        }
       } else if (notification != null) {
         final appNotif = AppNotification(
           title: notification.title ?? 'Notification',
