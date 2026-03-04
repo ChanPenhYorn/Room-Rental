@@ -16,6 +16,11 @@ booking:
   - createBooking:
   - getMyBookings:
   - getBookingById:
+chat:
+  - sendMessage:
+  - getConversations:
+  - getMessagesWithUser:
+  - markAsRead:
 dev:
   - getRegistrationCode:
 favorite:
@@ -35,6 +40,9 @@ ownerRequest:
 payment:
   - createAbaPaymentRequest:
   - verifyAbaTransaction:
+review:
+  - getReviewsForRoom:
+  - submitReview:
 room:
   - getRooms:
   - getRoomById:

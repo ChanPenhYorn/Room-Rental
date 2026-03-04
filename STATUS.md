@@ -113,8 +113,8 @@
 18. ⏳ My Activities Dashboard
 
 ### Phase 5: Social Features (2-3 hours)
-19. ⏳ Favourites
-20. ⏳ Chat System
+19. ✅ Favourites (Integrated with Backend)
+20. ✅ Chat System (Full End-to-End Implementation)
 21. ⏳ Profile & Settings
 
 ## 📊 Progress Tracker
@@ -127,11 +127,11 @@
 - [x] getRoomById endpoint
 - [x] searchRooms endpoint
 - [x] filterByPrice endpoint
-- [ ] User model
-- [ ] Bill model
-- [ ] Contract model
-- [ ] Chat model
-- [ ] Favorite model
+- [x] User model
+- [x] Bill model
+- [x] Contract model
+- [x] Chat model
+- [x] Favorite model
 
 ### Frontend - Screens
 - [x] Home Screen (50%)
@@ -143,9 +143,9 @@
 - [ ] Login Screen (0%)
 - [ ] Sign Up Screen (0%)
 - [ ] Booking Flow (0%)
-- [ ] Profile (0%)
-- [ ] Chat (0%)
-- [ ] Favourites (0%)
+- [x] Profile (100%)
+- [x] Chat (100% - Real Backend)
+- [x] Favourites (100% - Real Backend)
 
 ### Frontend - Components
 - [x] RoomCard (100%)
@@ -267,6 +267,6 @@ flutter run
 
 ---
 
-**Last Updated**: 2026-02-17 09:30 AM
+**Last Updated**: 2026-03-04 10:45 PM
 **Server Status**: 🟢 Running
-**Next Action**: Test API endpoint to fix 403 error
+**Next Action**: Implement the Property Management / owner flow

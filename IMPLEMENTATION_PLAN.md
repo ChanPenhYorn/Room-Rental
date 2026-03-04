@@ -73,14 +73,14 @@
 - ✅ `Room` - Basic room data
 - ✅ `Booking` - Booking records
 
-### Missing Models
-- ❌ `User` - User profiles
-- ❌ `Bill` - Payment invoices
-- ❌ `Contract` - Rental agreements
-- ❌ `Chat` - Messages
-- ❌ `Favorite` - Saved rooms
-- ❌ `Review` - User reviews
-- ❌ `Facility` - Room amenities
+### Protocol Models
+- ✅ `User` - User profiles
+- ✅ `Bill` - Payment invoices
+- ✅ `Contract` - Rental agreements
+- ✅ `ChatMessage` - Messaging system
+- ✅ `Favorite` - Saved rooms
+- ✅ `Review` - User reviews
+- ✅ `Facility` - Room amenities
 
 ## Mock Data Requirements
 

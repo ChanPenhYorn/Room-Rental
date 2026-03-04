@@ -22,6 +22,7 @@ RoomEntity _$RoomEntityFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$RoomEntity {
   int get id => throw _privateConstructorUsedError;
+  int get ownerId => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
@@ -59,6 +60,7 @@ abstract class $RoomEntityCopyWith<$Res> {
   @useResult
   $Res call({
     int id,
+    int ownerId,
     String title,
     String description,
     double price,
@@ -95,6 +97,7 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
   @override
   $Res call({
     Object? id = null,
+    Object? ownerId = null,
     Object? title = null,
     Object? description = null,
     Object? price = null,
@@ -118,6 +121,10 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
             id: null == id
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
+                      as int,
+            ownerId: null == ownerId
+                ? _value.ownerId
+                : ownerId // ignore: cast_nullable_to_non_nullable
                       as int,
             title: null == title
                 ? _value.title
@@ -204,6 +211,7 @@ abstract class _$$RoomEntityImplCopyWith<$Res>
   @useResult
   $Res call({
     int id,
+    int ownerId,
     String title,
     String description,
     double price,
@@ -239,6 +247,7 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? ownerId = null,
     Object? title = null,
     Object? description = null,
     Object? price = null,
@@ -262,6 +271,10 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
         id: null == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
+                  as int,
+        ownerId: null == ownerId
+            ? _value.ownerId
+            : ownerId // ignore: cast_nullable_to_non_nullable
                   as int,
         title: null == title
             ? _value.title
@@ -341,6 +354,7 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
 class _$RoomEntityImpl implements _RoomEntity {
   const _$RoomEntityImpl({
     required this.id,
+    required this.ownerId,
     required this.title,
     required this.description,
     required this.price,
@@ -366,6 +380,8 @@ class _$RoomEntityImpl implements _RoomEntity {
 
   @override
   final int id;
+  @override
+  final int ownerId;
   @override
   final String title;
   @override
@@ -417,7 +433,7 @@ class _$RoomEntityImpl implements _RoomEntity {
 
   @override
   String toString() {
-    return 'RoomEntity(id: $id, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities, status: $status, ownerName: $ownerName, rejectionReason: $rejectionReason, hasPendingEdit: $hasPendingEdit, pendingData: $pendingData)';
+    return 'RoomEntity(id: $id, ownerId: $ownerId, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities, status: $status, ownerName: $ownerName, rejectionReason: $rejectionReason, hasPendingEdit: $hasPendingEdit, pendingData: $pendingData)';
   }
 
   @override
@@ -426,6 +442,7 @@ class _$RoomEntityImpl implements _RoomEntity {
         (other.runtimeType == runtimeType &&
             other is _$RoomEntityImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.ownerId, ownerId) || other.ownerId == ownerId) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -460,9 +477,10 @@ class _$RoomEntityImpl implements _RoomEntity {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     id,
+    ownerId,
     title,
     description,
     price,
@@ -480,7 +498,7 @@ class _$RoomEntityImpl implements _RoomEntity {
     rejectionReason,
     hasPendingEdit,
     pendingData,
-  );
+  ]);
 
   /// Create a copy of RoomEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -499,6 +517,7 @@ class _$RoomEntityImpl implements _RoomEntity {
 abstract class _RoomEntity implements RoomEntity {
   const factory _RoomEntity({
     required final int id,
+    required final int ownerId,
     required final String title,
     required final String description,
     required final double price,
@@ -523,6 +542,8 @@ abstract class _RoomEntity implements RoomEntity {
 
   @override
   int get id;
+  @override
+  int get ownerId;
   @override
   String get title;
   @override

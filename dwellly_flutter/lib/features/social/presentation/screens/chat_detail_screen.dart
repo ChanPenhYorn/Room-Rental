@@ -1,50 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
+import 'package:dwellly_flutter/features/auth/presentation/providers/auth_providers.dart';
+import 'package:intl/intl.dart';
 
 /// Chat Detail Screen
 /// Displays a conversation with a specific user
-class ChatDetailScreen extends StatefulWidget {
+class ChatDetailScreen extends ConsumerStatefulWidget {
+  final int userId;
   final String userName;
   final String avatarUrl;
   final bool isOnline;
 
   const ChatDetailScreen({
     super.key,
+    required this.userId,
     required this.userName,
     required this.avatarUrl,
     required this.isOnline,
   });
 
   @override
-  State<ChatDetailScreen> createState() => _ChatDetailScreenState();
+  ConsumerState<ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<ChatDetailScreen> {
+class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Message> _messages = [
-    Message(
-      text: 'Hi there! Is the apartment at 123 Main St still available?',
-      isSender: true,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-    ),
-    Message(
-      text: 'Yes, it is still available. Would you like to schedule a viewing?',
-      isSender: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 4)),
-    ),
-    Message(
-      text: 'That would be great! How about tomorrow at 2 PM?',
-      isSender: true,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
-    ),
-    Message(
-      text: 'Tomorrow at 2 PM works perfectly. See you then!',
-      isSender: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-    ),
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Mark messages as read when entering the chat
+    Future.microtask(() {
+      ref.read(chatHistoryProvider(widget.userId).notifier).markRead();
+    });
+  }
 
   @override
   void dispose() {
@@ -54,20 +48,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
 
-    setState(() {
-      _messages.add(
-        Message(
-          text: _messageController.text.trim(),
-          isSender: true,
-          timestamp: DateTime.now(),
-        ),
-      );
-      _messageController.clear();
-    });
+    ref.read(chatHistoryProvider(widget.userId).notifier).sendMessage(text);
+    _messageController.clear();
 
     // Scroll to bottom
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -77,36 +68,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         );
       }
     });
-
-    // Simulate reply
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _messages.add(
-            Message(
-              text: 'Thanks for your message! I will adjust my schedule.',
-              isSender: false,
-              timestamp: DateTime.now(),
-            ),
-          );
-        });
-
-        // Scroll to bottom again after reply
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        });
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final chatHistoryState = ref.watch(chatHistoryProvider(widget.userId));
+    final authState = ref.watch(authStateProvider);
+
+    final currentUserId = authState.maybeWhen(
+      authenticated: (userInfo) => userInfo.id,
+      orElse: () => null,
+    );
+
     return Scaffold(
       backgroundColor: AppTheme.surfaceWhite,
       appBar: AppBar(
@@ -156,23 +129,40 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: AppTheme.secondaryGray),
-            onPressed: () {},
-          ),
         ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessageBubble(message);
+            child: chatHistoryState.when(
+              data: (messages) {
+                if (messages.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No messages yet. Say hi!',
+                      style: GoogleFonts.outfit(color: Colors.grey),
+                    ),
+                  );
+                }
+
+                // Trigger scroll to bottom on new messages
+                _scrollToBottom();
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isMe =
+                        message.senderId == currentUserId ||
+                        (message.sender?.userInfoId == currentUserId);
+                    return _buildMessageBubble(message, isMe);
+                  },
+                );
               },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
           _buildMessageInput(),
@@ -194,49 +184,51 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.add, color: AppTheme.primaryGreen),
-            onPressed: () {
-              // Attachments
-            },
-          ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceWhite,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: TextField(
-                controller: _messageController,
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: GoogleFonts.outfit(color: AppTheme.secondaryGray),
-                  border: InputBorder.none,
+      child: SafeArea(
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add, color: AppTheme.primaryGreen),
+              onPressed: () {},
+            ),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceWhite,
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                style: GoogleFonts.outfit(),
+                child: TextField(
+                  controller: _messageController,
+                  onSubmitted: (_) => _sendMessage(),
+                  decoration: InputDecoration(
+                    hintText: 'Type a message...',
+                    hintStyle: GoogleFonts.outfit(
+                      color: AppTheme.secondaryGray,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                  style: GoogleFonts.outfit(),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: AppTheme.primaryGreen,
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white, size: 20),
-              onPressed: _sendMessage,
+            const SizedBox(width: 8),
+            CircleAvatar(
+              backgroundColor: AppTheme.primaryGreen,
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                onPressed: _sendMessage,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMessageBubble(Message message) {
-    final isSender = message.isSender;
+  Widget _buildMessageBubble(ChatMessage message, bool isMe) {
     return Align(
-      alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -244,12 +236,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
-          color: isSender ? AppTheme.primaryGreen : Colors.white,
+          color: isMe ? AppTheme.primaryGreen : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft: isSender ? const Radius.circular(16) : Radius.zero,
-            bottomRight: isSender ? Radius.zero : const Radius.circular(16),
+            bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
+            bottomRight: isMe ? Radius.zero : const Radius.circular(16),
           ),
           boxShadow: [
             BoxShadow(
@@ -260,20 +252,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             Text(
-              message.text,
+              message.message,
               style: GoogleFonts.outfit(
-                color: isSender ? Colors.white : AppTheme.primaryBlack,
+                color: isMe ? Colors.white : AppTheme.primaryBlack,
                 fontSize: 15,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              _formatTime(message.timestamp),
+              DateFormat.jm().format(message.sentAt),
               style: GoogleFonts.outfit(
-                color: isSender
+                color: isMe
                     ? Colors.white.withOpacity(0.7)
                     : AppTheme.secondaryGray,
                 fontSize: 10,
@@ -284,20 +278,4 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       ),
     );
   }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour}:${time.minute.toString().padLeft(2, '0')} ${time.hour >= 12 ? 'PM' : 'AM'}';
-  }
-}
-
-class Message {
-  final String text;
-  final bool isSender;
-  final DateTime timestamp;
-
-  Message({
-    required this.text,
-    required this.isSender,
-    required this.timestamp,
-  });
 }

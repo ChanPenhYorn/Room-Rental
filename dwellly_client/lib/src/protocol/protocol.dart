@@ -33,16 +33,18 @@ import 'room_type.dart' as _i20;
 import 'user.dart' as _i21;
 import 'user_role.dart' as _i22;
 import 'package:dwellly_client/src/protocol/booking.dart' as _i23;
-import 'package:dwellly_client/src/protocol/favorite.dart' as _i24;
-import 'package:dwellly_client/src/protocol/app_notification.dart' as _i25;
-import 'package:dwellly_client/src/protocol/become_owner_request.dart' as _i26;
-import 'package:dwellly_client/src/protocol/room.dart' as _i27;
-import 'package:dwellly_client/src/protocol/user.dart' as _i28;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i29;
+import 'package:dwellly_client/src/protocol/chat_message.dart' as _i24;
+import 'package:dwellly_client/src/protocol/favorite.dart' as _i25;
+import 'package:dwellly_client/src/protocol/app_notification.dart' as _i26;
+import 'package:dwellly_client/src/protocol/become_owner_request.dart' as _i27;
+import 'package:dwellly_client/src/protocol/review.dart' as _i28;
+import 'package:dwellly_client/src/protocol/room.dart' as _i29;
+import 'package:dwellly_client/src/protocol/user.dart' as _i30;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i31;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i30;
+    as _i32;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i31;
+    as _i33;
 export 'app_notification.dart';
 export 'become_owner_request.dart';
 export 'bill.dart';
@@ -331,30 +333,40 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i23.Booking>(e)).toList()
           as T;
     }
+    if (t == List<_i24.ChatMessage>) {
+      return (data as List)
+              .map((e) => deserialize<_i24.ChatMessage>(e))
+              .toList()
+          as T;
+    }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i24.Favorite>) {
-      return (data as List).map((e) => deserialize<_i24.Favorite>(e)).toList()
+    if (t == List<_i25.Favorite>) {
+      return (data as List).map((e) => deserialize<_i25.Favorite>(e)).toList()
           as T;
     }
-    if (t == List<_i25.AppNotification>) {
+    if (t == List<_i26.AppNotification>) {
       return (data as List)
-              .map((e) => deserialize<_i25.AppNotification>(e))
+              .map((e) => deserialize<_i26.AppNotification>(e))
               .toList()
           as T;
     }
-    if (t == List<_i26.BecomeOwnerRequest>) {
+    if (t == List<_i27.BecomeOwnerRequest>) {
       return (data as List)
-              .map((e) => deserialize<_i26.BecomeOwnerRequest>(e))
+              .map((e) => deserialize<_i27.BecomeOwnerRequest>(e))
               .toList()
           as T;
     }
-    if (t == List<_i27.Room>) {
-      return (data as List).map((e) => deserialize<_i27.Room>(e)).toList() as T;
+    if (t == List<_i28.Review>) {
+      return (data as List).map((e) => deserialize<_i28.Review>(e)).toList()
+          as T;
     }
-    if (t == List<_i28.User>) {
-      return (data as List).map((e) => deserialize<_i28.User>(e)).toList() as T;
+    if (t == List<_i29.Room>) {
+      return (data as List).map((e) => deserialize<_i29.Room>(e)).toList() as T;
+    }
+    if (t == List<_i30.User>) {
+      return (data as List).map((e) => deserialize<_i30.User>(e)).toList() as T;
     }
     if (t == Map<String, int>) {
       return (data as Map).map(
@@ -363,13 +375,13 @@ class Protocol extends _i1.SerializationManager {
           as T;
     }
     try {
-      return _i29.Protocol().deserialize<T>(data, t);
-    } on _i1.DeserializationTypeNotFoundException catch (_) {}
-    try {
-      return _i30.Protocol().deserialize<T>(data, t);
-    } on _i1.DeserializationTypeNotFoundException catch (_) {}
-    try {
       return _i31.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i32.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i33.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -454,15 +466,15 @@ class Protocol extends _i1.SerializationManager {
       case _i22.UserRole():
         return 'UserRole';
     }
-    className = _i29.Protocol().getClassNameForObject(data);
+    className = _i31.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth.$className';
     }
-    className = _i30.Protocol().getClassNameForObject(data);
+    className = _i32.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
-    className = _i31.Protocol().getClassNameForObject(data);
+    className = _i33.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
@@ -540,15 +552,15 @@ class Protocol extends _i1.SerializationManager {
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
-      return _i29.Protocol().deserializeByClassName(data);
+      return _i31.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i30.Protocol().deserializeByClassName(data);
+      return _i32.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i31.Protocol().deserializeByClassName(data);
+      return _i33.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -563,13 +575,13 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i29.Protocol().mapRecordToJson(record);
-    } catch (_) {}
-    try {
-      return _i30.Protocol().mapRecordToJson(record);
-    } catch (_) {}
-    try {
       return _i31.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _i32.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _i33.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

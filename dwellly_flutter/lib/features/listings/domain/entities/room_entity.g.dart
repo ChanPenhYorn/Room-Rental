@@ -9,6 +9,7 @@ part of 'room_entity.dart';
 _$RoomEntityImpl _$$RoomEntityImplFromJson(Map<String, dynamic> json) =>
     _$RoomEntityImpl(
       id: (json['id'] as num).toInt(),
+      ownerId: (json['ownerId'] as num).toInt(),
       title: json['title'] as String,
       description: json['description'] as String,
       price: (json['price'] as num).toDouble(),
@@ -37,6 +38,7 @@ _$RoomEntityImpl _$$RoomEntityImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$RoomEntityImplToJson(_$RoomEntityImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'ownerId': instance.ownerId,
       'title': instance.title,
       'description': instance.description,
       'price': instance.price,

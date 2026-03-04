@@ -4,9 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/features/bookings/presentation/screens/booking_date_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dwellly_flutter/features/social/presentation/screens/chat_detail_screen.dart';
 import 'package:dwellly_flutter/features/social/presentation/providers/favourite_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/room_entity.dart';
+import '../controllers/review_controller.dart';
+import '../widgets/review_card.dart';
+import '../widgets/review_modal.dart';
 
 class RoomDetailScreen extends ConsumerWidget {
   final RoomEntity room;
@@ -275,6 +279,87 @@ class RoomDetailScreen extends ConsumerWidget {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Reviews',
+                              style: GoogleFonts.outfit(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) =>
+                                      ReviewModal(roomId: room.id),
+                                );
+                              },
+                              icon: const Icon(Icons.edit, size: 16),
+                              label: Text(
+                                'Write a Review',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final reviewsState = ref.watch(
+                              roomReviewsProvider(room.id),
+                            );
+
+                            return reviewsState.when(
+                              data: (reviews) {
+                                if (reviews.isEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 24.0,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'No reviews yet. Be the first to leave one!',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.grey[500],
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                return Column(
+                                  children: reviews
+                                      .map(
+                                        (review) => ReviewCard(review: review),
+                                      )
+                                      .toList(),
+                                );
+                              },
+                              loading: () => const Padding(
+                                padding: EdgeInsets.all(24.0),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                              error: (err, stack) => Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Center(
+                                  child: Text('Error loading reviews: $err'),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         const SizedBox(height: 100), // Bottom padding
                       ],
                     ),
@@ -335,7 +420,33 @@ class RoomDetailScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(width: 24),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondaryGreen,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.chat_bubble_outline,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatDetailScreen(
+                              userId: room.ownerId,
+                              userName: 'Property Host', // Ideally fetched
+                              avatarUrl:
+                                  'https://i.pravatar.cc/150?u=${room.ownerId}',
+                              isOnline: true,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {

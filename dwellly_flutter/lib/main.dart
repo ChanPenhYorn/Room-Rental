@@ -139,8 +139,15 @@ Future<String> getServerUrl() async {
   try {
     final configString = await rootBundle.loadString('assets/config.json');
     final config = jsonDecode(configString);
-    return config['apiUrl'] ?? 'http://localhost:8080/';
+    String url = config['apiUrl'] ?? 'http://localhost:9080/';
+
+    // Android emulator needs 10.0.2.2 instead of localhost
+    if (Platform.isAndroid && url.contains('localhost')) {
+      url = url.replaceAll('localhost', '10.0.2.2');
+    }
+    return url;
   } catch (e) {
-    return 'http://localhost:8080/';
+    if (Platform.isAndroid) return 'http://10.0.2.2:9080/';
+    return 'http://localhost:9080/';
   }
 }

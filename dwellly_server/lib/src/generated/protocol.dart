@@ -39,11 +39,13 @@ import 'room_type.dart' as _i24;
 import 'user.dart' as _i25;
 import 'user_role.dart' as _i26;
 import 'package:dwellly_server/src/generated/booking.dart' as _i27;
-import 'package:dwellly_server/src/generated/favorite.dart' as _i28;
-import 'package:dwellly_server/src/generated/app_notification.dart' as _i29;
-import 'package:dwellly_server/src/generated/become_owner_request.dart' as _i30;
-import 'package:dwellly_server/src/generated/room.dart' as _i31;
-import 'package:dwellly_server/src/generated/user.dart' as _i32;
+import 'package:dwellly_server/src/generated/chat_message.dart' as _i28;
+import 'package:dwellly_server/src/generated/favorite.dart' as _i29;
+import 'package:dwellly_server/src/generated/app_notification.dart' as _i30;
+import 'package:dwellly_server/src/generated/become_owner_request.dart' as _i31;
+import 'package:dwellly_server/src/generated/review.dart' as _i32;
+import 'package:dwellly_server/src/generated/room.dart' as _i33;
+import 'package:dwellly_server/src/generated/user.dart' as _i34;
 export 'app_notification.dart';
 export 'become_owner_request.dart';
 export 'bill.dart';
@@ -1449,30 +1451,40 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data as List).map((e) => deserialize<_i27.Booking>(e)).toList()
           as T;
     }
+    if (t == List<_i28.ChatMessage>) {
+      return (data as List)
+              .map((e) => deserialize<_i28.ChatMessage>(e))
+              .toList()
+          as T;
+    }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i28.Favorite>) {
-      return (data as List).map((e) => deserialize<_i28.Favorite>(e)).toList()
+    if (t == List<_i29.Favorite>) {
+      return (data as List).map((e) => deserialize<_i29.Favorite>(e)).toList()
           as T;
     }
-    if (t == List<_i29.AppNotification>) {
+    if (t == List<_i30.AppNotification>) {
       return (data as List)
-              .map((e) => deserialize<_i29.AppNotification>(e))
+              .map((e) => deserialize<_i30.AppNotification>(e))
               .toList()
           as T;
     }
-    if (t == List<_i30.BecomeOwnerRequest>) {
+    if (t == List<_i31.BecomeOwnerRequest>) {
       return (data as List)
-              .map((e) => deserialize<_i30.BecomeOwnerRequest>(e))
+              .map((e) => deserialize<_i31.BecomeOwnerRequest>(e))
               .toList()
           as T;
     }
-    if (t == List<_i31.Room>) {
-      return (data as List).map((e) => deserialize<_i31.Room>(e)).toList() as T;
+    if (t == List<_i32.Review>) {
+      return (data as List).map((e) => deserialize<_i32.Review>(e)).toList()
+          as T;
     }
-    if (t == List<_i32.User>) {
-      return (data as List).map((e) => deserialize<_i32.User>(e)).toList() as T;
+    if (t == List<_i33.Room>) {
+      return (data as List).map((e) => deserialize<_i33.Room>(e)).toList() as T;
+    }
+    if (t == List<_i34.User>) {
+      return (data as List).map((e) => deserialize<_i34.User>(e)).toList() as T;
     }
     if (t == Map<String, int>) {
       return (data as Map).map(

@@ -1,60 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
+import 'package:dwellly_flutter/features/auth/presentation/providers/auth_providers.dart';
 import 'package:dwellly_flutter/features/social/presentation/screens/chat_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 /// Chat List Screen
 /// Displays a list of recent conversations
-class ChatListScreen extends StatefulWidget {
+class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
 
   @override
-  State<ChatListScreen> createState() => _ChatListScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final conversationsState = ref.watch(conversationsProvider);
+    final authState = ref.watch(authStateProvider);
 
-class _ChatListScreenState extends State<ChatListScreen> {
-  // Mock data for conversations
-  final List<Map<String, dynamic>> _conversations = [
-    {
-      'id': '1',
-      'name': 'John Doe',
-      'avatarUrl': 'https://i.pravatar.cc/150?u=1',
-      'lastMessage': 'Is the apartment still available?',
-      'time': '10:30 AM',
-      'unreadCount': 2,
-      'isOnline': true,
-    },
-    {
-      'id': '2',
-      'name': 'Sarah Smith',
-      'avatarUrl': 'https://i.pravatar.cc/150?u=2',
-      'lastMessage': 'Thanks for the tour yesterday!',
-      'time': 'Yesterday',
-      'unreadCount': 0,
-      'isOnline': false,
-    },
-    {
-      'id': '3',
-      'name': 'Mike Johnson',
-      'avatarUrl': 'https://i.pravatar.cc/150?u=3',
-      'lastMessage': 'I will let you know by tomorrow.',
-      'time': 'Mon',
-      'unreadCount': 0,
-      'isOnline': true,
-    },
-    {
-      'id': '4',
-      'name': 'Emily Davis',
-      'avatarUrl': 'https://i.pravatar.cc/150?u=4',
-      'lastMessage': 'What is the security deposit amount?',
-      'time': 'Sun',
-      'unreadCount': 5,
-      'isOnline': false,
-    },
-  ];
+    final currentUserId = authState.maybeWhen(
+      authenticated: (userInfo) => userInfo.id,
+      orElse: () => null,
+    );
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surfaceWhite,
       appBar: AppBar(
@@ -83,12 +51,58 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: _conversations.length,
-        itemBuilder: (context, index) {
-          final conversation = _conversations[index];
-          return _buildConversationItem(conversation);
+      body: conversationsState.when(
+        data: (conversations) {
+          if (conversations.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 64,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No messages yet',
+                    style: GoogleFonts.outfit(
+                      color: Colors.grey[500],
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: conversations.length,
+            itemBuilder: (context, index) {
+              final message = conversations[index];
+
+              // Identify the contact
+              final isSenderMe =
+                  message.senderId == currentUserId ||
+                  (message.sender?.userInfoId == currentUserId);
+
+              final contact = isSenderMe ? message.receiver : message.sender;
+              final contactId = isSenderMe
+                  ? message.receiverId
+                  : message.senderId;
+
+              return _buildConversationItem(
+                context,
+                ref,
+                message,
+                contact,
+                contactId,
+              );
+            },
+          );
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -100,16 +114,42 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _buildConversationItem(Map<String, dynamic> conversation) {
+  String _formatTime(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateDay = DateTime(date.year, date.month, date.day);
+
+    if (dateDay == today) {
+      return DateFormat.jm().format(date);
+    } else if (today.difference(dateDay).inDays == 1) {
+      return 'Yesterday';
+    } else {
+      return DateFormat.MMMd().format(date);
+    }
+  }
+
+  Widget _buildConversationItem(
+    BuildContext context,
+    WidgetRef ref,
+    ChatMessage message,
+    User? contact,
+    int contactId,
+  ) {
+    final contactName = contact?.fullName ?? 'Unknown';
+    final avatarUrl =
+        contact?.profileImage ?? 'https://i.pravatar.cc/150?u=$contactId';
+    final timeStr = _formatTime(message.sentAt);
+
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => ChatDetailScreen(
-              userName: conversation['name'],
-              avatarUrl: conversation['avatarUrl'],
-              isOnline: conversation['isOnline'],
+              userId: contactId,
+              userName: contactName,
+              avatarUrl: avatarUrl,
+              isOnline: false,
             ),
           ),
         );
@@ -118,36 +158,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           children: [
-            // Avatar with Online Status
             Stack(
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundImage: NetworkImage(conversation['avatarUrl']),
+                  backgroundImage: NetworkImage(avatarUrl),
                   backgroundColor: AppTheme.dividerGray,
                 ),
-                if (conversation['isOnline'])
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
             const SizedBox(width: 16),
-
-            // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +176,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        conversation['name'],
+                        contactName,
                         style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -164,13 +184,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ),
                       ),
                       Text(
-                        conversation['time'],
+                        timeStr,
                         style: GoogleFonts.outfit(
                           fontSize: 12,
-                          color: conversation['unreadCount'] > 0
+                          color:
+                              !message.isRead && message.senderId == contactId
                               ? AppTheme.primaryGreen
                               : AppTheme.secondaryGray,
-                          fontWeight: conversation['unreadCount'] > 0
+                          fontWeight:
+                              !message.isRead && message.senderId == contactId
                               ? FontWeight.bold
                               : FontWeight.normal,
                         ),
@@ -182,13 +204,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          conversation['lastMessage'],
+                          message.message,
                           style: GoogleFonts.outfit(
                             fontSize: 14,
-                            color: conversation['unreadCount'] > 0
+                            color:
+                                !message.isRead && message.senderId == contactId
                                 ? AppTheme.primaryBlack
                                 : AppTheme.secondaryGray,
-                            fontWeight: conversation['unreadCount'] > 0
+                            fontWeight:
+                                !message.isRead && message.senderId == contactId
                                 ? FontWeight.w600
                                 : FontWeight.normal,
                           ),
@@ -196,21 +220,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (conversation['unreadCount'] > 0)
+                      if (!message.isRead && message.senderId == contactId)
                         Container(
                           margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
                             color: AppTheme.primaryGreen,
                             shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            conversation['unreadCount'].toString(),
-                            style: GoogleFonts.outfit(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
                           ),
                         ),
                     ],

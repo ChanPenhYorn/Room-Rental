@@ -8,6 +8,7 @@ part 'room_entity.g.dart';
 class RoomEntity with _$RoomEntity {
   const factory RoomEntity({
     required int id,
+    required int ownerId,
     required String title,
     required String description,
     required double price,

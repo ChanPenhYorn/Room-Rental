@@ -42,3 +42,4 @@ services:
 volumes:
   room_rental_data:
   room_rental_test_data:
+  

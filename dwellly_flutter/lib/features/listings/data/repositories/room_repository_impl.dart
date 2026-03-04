@@ -125,6 +125,7 @@ class RoomRepositoryImpl implements RoomRepository {
   RoomEntity _mapToEntity(Room dto) {
     return RoomEntity(
       id: dto.id ?? 0,
+      ownerId: dto.ownerId,
       title: dto.title ?? '',
       description: dto.description ?? '',
       price: dto.price ?? 0.0,
