@@ -23,6 +23,7 @@ class RoomEntity with _$RoomEntity {
     required List<String> facilities,
     @Default(RoomStatus.pending) RoomStatus status,
     String? ownerName,
+    String? ownerAvatarUrl,
     String? rejectionReason,
     @Default(false) bool hasPendingEdit,
     String? pendingData,

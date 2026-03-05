@@ -436,8 +436,9 @@ class RoomDetailScreen extends ConsumerWidget {
                           MaterialPageRoute(
                             builder: (_) => ChatDetailScreen(
                               userId: room.ownerId,
-                              userName: 'Property Host', // Ideally fetched
+                              userName: room.ownerName ?? 'Property Host',
                               avatarUrl:
+                                  room.ownerAvatarUrl ??
                                   'https://i.pravatar.cc/150?u=${room.ownerId}',
                               isOnline: true,
                             ),

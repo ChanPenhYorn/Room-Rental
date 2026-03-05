@@ -139,6 +139,7 @@ class RoomRepositoryImpl implements RoomRepository {
       type: dto.type ?? RoomType.apartment1br,
       status: dto.status ?? RoomStatus.pending,
       ownerName: dto.owner?.fullName,
+      ownerAvatarUrl: dto.owner?.profileImage,
       rejectionReason: dto.rejectionReason,
       facilities:
           dto.facilities

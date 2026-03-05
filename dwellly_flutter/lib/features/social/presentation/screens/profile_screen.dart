@@ -260,13 +260,21 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
       authenticated: (userInfo) {
-        // Use full profile data if available, fallback to basic userInfo
         final displayName =
-            userProfile?.fullName ?? userInfo.fullName ?? 'User';
+            (userProfile?.fullName != null && userProfile!.fullName.isNotEmpty)
+            ? userProfile.fullName
+            : (userInfo.fullName != null && userInfo.fullName!.isNotEmpty)
+            ? userInfo.fullName!
+            : 'User';
+
         final displayImageUrl =
-            userProfile?.profileImage ??
-            userInfo.imageUrl ??
-            'https://i.pravatar.cc/150?u=${userInfo.userIdentifier}';
+            (userProfile?.profileImage != null &&
+                userProfile!.profileImage!.isNotEmpty)
+            ? userProfile.profileImage!
+            : (userInfo.imageUrl != null && userInfo.imageUrl!.isNotEmpty)
+            ? userInfo.imageUrl!
+            : 'https://i.pravatar.cc/150?u=${userInfo.userIdentifier}';
+
         final roleName = userProfile?.role.name.toUpperCase() ?? 'TENANT';
 
         return Container(

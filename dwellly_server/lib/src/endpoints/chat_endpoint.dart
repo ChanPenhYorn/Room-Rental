@@ -58,9 +58,13 @@ class ChatEndpoint extends Endpoint {
       );
 
       if (fullMessage != null) {
-        // Broadcast the message to the recipient's private channel (WebSockets)
+        // Broadcast the message to both participants' private channels (WebSockets)
         session.messages.postMessage(
           'channel_user_$receiverId',
+          fullMessage,
+        );
+        session.messages.postMessage(
+          'channel_user_${user.id}',
           fullMessage,
         );
 

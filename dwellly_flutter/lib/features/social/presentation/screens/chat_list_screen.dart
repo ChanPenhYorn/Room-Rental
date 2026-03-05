@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
-import 'package:dwellly_flutter/features/auth/presentation/providers/auth_providers.dart';
 import 'package:dwellly_flutter/features/social/presentation/screens/chat_detail_screen.dart';
+import 'package:dwellly_flutter/features/auth/presentation/providers/user_providers.dart';
 import 'package:intl/intl.dart';
 
 /// Chat List Screen
@@ -16,10 +16,10 @@ class ChatListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final conversationsState = ref.watch(conversationsProvider);
-    final authState = ref.watch(authStateProvider);
+    final userProfile = ref.watch(userProfileProvider);
 
-    final currentUserId = authState.maybeWhen(
-      authenticated: (userInfo) => userInfo.id,
+    final currentUserId = userProfile.maybeWhen(
+      data: (user) => user?.id,
       orElse: () => null,
     );
 
@@ -137,7 +137,9 @@ class ChatListScreen extends ConsumerWidget {
   ) {
     final contactName = contact?.fullName ?? 'Unknown';
     final avatarUrl =
-        contact?.profileImage ?? 'https://i.pravatar.cc/150?u=$contactId';
+        (contact?.profileImage != null && contact!.profileImage!.isNotEmpty)
+        ? contact.profileImage!
+        : 'https://i.pravatar.cc/150?u=$contactId';
     final timeStr = _formatTime(message.sentAt);
 
     return InkWell(

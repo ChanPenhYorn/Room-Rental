@@ -9,6 +9,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _repository.authStateChanges.listen((user) {
       if (user != null) {
         state = AuthState.authenticated(user);
+        _repository.authenticatedClient.openStreamingConnection().catchError(
+          (_) {},
+        );
       } else {
         state = const AuthState.unauthenticated();
       }
@@ -21,6 +24,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _repository.getCurrentUser();
       if (user != null) {
         state = AuthState.authenticated(user);
+        // Ensure stream is open and authenticated
+        _repository.authenticatedClient.openStreamingConnection().catchError(
+          (_) {},
+        );
       } else {
         state = const AuthState.unauthenticated();
       }
@@ -35,6 +42,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _repository.login(email, password);
       if (user != null) {
         state = AuthState.authenticated(user);
+        // Re-open streaming connection to upgrade it to an authenticated state
+        _repository.authenticatedClient.openStreamingConnection().catchError((
+          e,
+        ) {
+          print('Warning: Failed to reconnect stream after login: $e');
+        });
       } else {
         state = const AuthState.failure('Login failed: User is null');
       }

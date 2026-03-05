@@ -72,20 +72,6 @@ void main() async {
     NotificationService().initialize();
   }
 
-  // 5. Wait a bit for session to be fully initialized (helps with iOS simulator)
-  await Future.delayed(const Duration(milliseconds: 500));
-
-  // 6. Validate session early to catch issues
-  try {
-    final isValid = await authSessionManager.validateAuthentication();
-    print('🔍 [INIT] Session validation result: $isValid');
-    if (!isValid) {
-      print('⚠️ [INIT] Session invalid, will require re-login');
-    }
-  } catch (e) {
-    print('⚠️ [INIT] Session validation failed: $e');
-  }
-
   print('✅ [INIT] Client and FlutterAuthSessionManager initialized');
 
   runApp(

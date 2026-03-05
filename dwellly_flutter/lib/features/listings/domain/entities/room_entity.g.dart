@@ -30,6 +30,7 @@ _$RoomEntityImpl _$$RoomEntityImplFromJson(Map<String, dynamic> json) =>
           $enumDecodeNullable(_$RoomStatusEnumMap, json['status']) ??
           RoomStatus.pending,
       ownerName: json['ownerName'] as String?,
+      ownerAvatarUrl: json['ownerAvatarUrl'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
       hasPendingEdit: json['hasPendingEdit'] as bool? ?? false,
       pendingData: json['pendingData'] as String?,
@@ -53,6 +54,7 @@ Map<String, dynamic> _$$RoomEntityImplToJson(_$RoomEntityImpl instance) =>
       'facilities': instance.facilities,
       'status': instance.status,
       'ownerName': instance.ownerName,
+      'ownerAvatarUrl': instance.ownerAvatarUrl,
       'rejectionReason': instance.rejectionReason,
       'hasPendingEdit': instance.hasPendingEdit,
       'pendingData': instance.pendingData,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart';
+import '../../../../main.dart'; // Import global client
 import 'login_screen.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
@@ -39,7 +40,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     // Wait a bit for the server to process the request
     await Future.delayed(const Duration(milliseconds: 500));
     try {
-      final client = Client('http://127.0.0.1:9080/');
+      // Use global client
       final code = await client.dev.getRegistrationCode(widget.email);
       if (code != null) {
         debugPrint('*************************************************');
@@ -72,9 +73,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     });
 
     try {
-      // Get the client from the provider
-      final client = Client('http://127.0.0.1:9080/');
-
       debugPrint('--- Starting Verification ---');
       debugPrint('Email: ${widget.email}');
       debugPrint('Account Request ID: ${widget.accountRequestId}');
@@ -145,8 +143,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     });
 
     try {
-      final client = Client('http://127.0.0.1:9080/');
-
       // Start registration again to get a new code and account request ID
       final newAccountRequestId = await client.emailIdp.startRegistration(
         email: widget.email,

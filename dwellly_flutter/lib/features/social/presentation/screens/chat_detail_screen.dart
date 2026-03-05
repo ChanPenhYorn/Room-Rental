@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
-import 'package:dwellly_flutter/features/auth/presentation/providers/auth_providers.dart';
+import 'package:dwellly_flutter/features/auth/presentation/providers/user_providers.dart';
 import 'package:intl/intl.dart';
 
 /// Chat Detail Screen
@@ -73,10 +73,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final chatHistoryState = ref.watch(chatHistoryProvider(widget.userId));
-    final authState = ref.watch(authStateProvider);
+    final userProfile = ref.watch(userProfileProvider);
 
-    final currentUserId = authState.maybeWhen(
-      authenticated: (userInfo) => userInfo.id,
+    final currentUserId = userProfile.maybeWhen(
+      data: (user) => user?.id,
       orElse: () => null,
     );
 

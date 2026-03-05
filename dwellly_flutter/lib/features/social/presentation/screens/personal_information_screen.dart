@@ -184,9 +184,12 @@ class _PersonalInformationScreenState
   Widget _buildContent(UserInfo user) {
     // Determine image URL: prefer server profile image, fallback to auth image, then placeholder
     final displayImageUrl =
-        _userProfile?.profileImage ??
-        user.imageUrl ??
-        'https://i.pravatar.cc/150?u=${user.userIdentifier}';
+        (_userProfile?.profileImage != null &&
+            _userProfile!.profileImage!.isNotEmpty)
+        ? _userProfile!.profileImage!
+        : (user.imageUrl != null && user.imageUrl!.isNotEmpty)
+        ? user.imageUrl!
+        : 'https://i.pravatar.cc/150?u=${user.userIdentifier}';
     final accountType = _userProfile?.role.name.toUpperCase() ?? 'TENANT';
     final memberSince = _userProfile?.createdAt ?? user.created;
     final displayId =

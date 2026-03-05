@@ -37,6 +37,7 @@ mixin _$RoomEntity {
   List<String> get facilities => throw _privateConstructorUsedError;
   RoomStatus get status => throw _privateConstructorUsedError;
   String? get ownerName => throw _privateConstructorUsedError;
+  String? get ownerAvatarUrl => throw _privateConstructorUsedError;
   String? get rejectionReason => throw _privateConstructorUsedError;
   bool get hasPendingEdit => throw _privateConstructorUsedError;
   String? get pendingData => throw _privateConstructorUsedError;
@@ -75,6 +76,7 @@ abstract class $RoomEntityCopyWith<$Res> {
     List<String> facilities,
     RoomStatus status,
     String? ownerName,
+    String? ownerAvatarUrl,
     String? rejectionReason,
     bool hasPendingEdit,
     String? pendingData,
@@ -112,6 +114,7 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
     Object? facilities = null,
     Object? status = null,
     Object? ownerName = freezed,
+    Object? ownerAvatarUrl = freezed,
     Object? rejectionReason = freezed,
     Object? hasPendingEdit = null,
     Object? pendingData = freezed,
@@ -182,6 +185,10 @@ class _$RoomEntityCopyWithImpl<$Res, $Val extends RoomEntity>
                 ? _value.ownerName
                 : ownerName // ignore: cast_nullable_to_non_nullable
                       as String?,
+            ownerAvatarUrl: freezed == ownerAvatarUrl
+                ? _value.ownerAvatarUrl
+                : ownerAvatarUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
             rejectionReason: freezed == rejectionReason
                 ? _value.rejectionReason
                 : rejectionReason // ignore: cast_nullable_to_non_nullable
@@ -226,6 +233,7 @@ abstract class _$$RoomEntityImplCopyWith<$Res>
     List<String> facilities,
     RoomStatus status,
     String? ownerName,
+    String? ownerAvatarUrl,
     String? rejectionReason,
     bool hasPendingEdit,
     String? pendingData,
@@ -262,6 +270,7 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
     Object? facilities = null,
     Object? status = null,
     Object? ownerName = freezed,
+    Object? ownerAvatarUrl = freezed,
     Object? rejectionReason = freezed,
     Object? hasPendingEdit = null,
     Object? pendingData = freezed,
@@ -332,6 +341,10 @@ class __$$RoomEntityImplCopyWithImpl<$Res>
             ? _value.ownerName
             : ownerName // ignore: cast_nullable_to_non_nullable
                   as String?,
+        ownerAvatarUrl: freezed == ownerAvatarUrl
+            ? _value.ownerAvatarUrl
+            : ownerAvatarUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
         rejectionReason: freezed == rejectionReason
             ? _value.rejectionReason
             : rejectionReason // ignore: cast_nullable_to_non_nullable
@@ -369,6 +382,7 @@ class _$RoomEntityImpl implements _RoomEntity {
     required final List<String> facilities,
     this.status = RoomStatus.pending,
     this.ownerName,
+    this.ownerAvatarUrl,
     this.rejectionReason,
     this.hasPendingEdit = false,
     this.pendingData,
@@ -424,6 +438,8 @@ class _$RoomEntityImpl implements _RoomEntity {
   @override
   final String? ownerName;
   @override
+  final String? ownerAvatarUrl;
+  @override
   final String? rejectionReason;
   @override
   @JsonKey()
@@ -433,7 +449,7 @@ class _$RoomEntityImpl implements _RoomEntity {
 
   @override
   String toString() {
-    return 'RoomEntity(id: $id, ownerId: $ownerId, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities, status: $status, ownerName: $ownerName, rejectionReason: $rejectionReason, hasPendingEdit: $hasPendingEdit, pendingData: $pendingData)';
+    return 'RoomEntity(id: $id, ownerId: $ownerId, title: $title, description: $description, price: $price, location: $location, latitude: $latitude, longitude: $longitude, imageUrl: $imageUrl, images: $images, isAvailable: $isAvailable, rating: $rating, type: $type, facilities: $facilities, status: $status, ownerName: $ownerName, ownerAvatarUrl: $ownerAvatarUrl, rejectionReason: $rejectionReason, hasPendingEdit: $hasPendingEdit, pendingData: $pendingData)';
   }
 
   @override
@@ -467,6 +483,8 @@ class _$RoomEntityImpl implements _RoomEntity {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.ownerName, ownerName) ||
                 other.ownerName == ownerName) &&
+            (identical(other.ownerAvatarUrl, ownerAvatarUrl) ||
+                other.ownerAvatarUrl == ownerAvatarUrl) &&
             (identical(other.rejectionReason, rejectionReason) ||
                 other.rejectionReason == rejectionReason) &&
             (identical(other.hasPendingEdit, hasPendingEdit) ||
@@ -495,6 +513,7 @@ class _$RoomEntityImpl implements _RoomEntity {
     const DeepCollectionEquality().hash(_facilities),
     status,
     ownerName,
+    ownerAvatarUrl,
     rejectionReason,
     hasPendingEdit,
     pendingData,
@@ -532,6 +551,7 @@ abstract class _RoomEntity implements RoomEntity {
     required final List<String> facilities,
     final RoomStatus status,
     final String? ownerName,
+    final String? ownerAvatarUrl,
     final String? rejectionReason,
     final bool hasPendingEdit,
     final String? pendingData,
@@ -572,6 +592,8 @@ abstract class _RoomEntity implements RoomEntity {
   RoomStatus get status;
   @override
   String? get ownerName;
+  @override
+  String? get ownerAvatarUrl;
   @override
   String? get rejectionReason;
   @override
