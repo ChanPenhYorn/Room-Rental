@@ -440,7 +440,7 @@ class RoomDetailScreen extends ConsumerWidget {
                               avatarUrl:
                                   room.ownerAvatarUrl ??
                                   'https://i.pravatar.cc/150?u=${room.ownerId}',
-                              isOnline: true,
+                              isOnline: room.ownerIsOnline,
                             ),
                           ),
                         );

@@ -33,6 +33,8 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     required this.role,
     this.profileImage,
     this.fcmToken,
+    bool? isOnline,
+    this.lastSeen,
     required this.createdAt,
     this.rooms,
     this.bookings,
@@ -40,7 +42,7 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     this.receivedMessages,
     this.favorites,
     this.reviews,
-  });
+  }) : isOnline = isOnline ?? false;
 
   factory User({
     int? id,
@@ -53,6 +55,8 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     required _i3.UserRole role,
     String? profileImage,
     String? fcmToken,
+    bool? isOnline,
+    DateTime? lastSeen,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -78,6 +82,10 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       role: _i3.UserRole.fromJson((jsonSerialization['role'] as String)),
       profileImage: jsonSerialization['profileImage'] as String?,
       fcmToken: jsonSerialization['fcmToken'] as String?,
+      isOnline: jsonSerialization['isOnline'] as bool?,
+      lastSeen: jsonSerialization['lastSeen'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['lastSeen']),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -139,6 +147,10 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   String? fcmToken;
 
+  bool isOnline;
+
+  DateTime? lastSeen;
+
   DateTime createdAt;
 
   List<_i4.Room>? rooms;
@@ -170,6 +182,8 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     _i3.UserRole? role,
     String? profileImage,
     String? fcmToken,
+    bool? isOnline,
+    DateTime? lastSeen,
     DateTime? createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -192,6 +206,8 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'role': role.toJson(),
       if (profileImage != null) 'profileImage': profileImage,
       if (fcmToken != null) 'fcmToken': fcmToken,
+      'isOnline': isOnline,
+      if (lastSeen != null) 'lastSeen': lastSeen?.toJson(),
       'createdAt': createdAt.toJson(),
       if (rooms != null) 'rooms': rooms?.toJson(valueToJson: (v) => v.toJson()),
       if (bookings != null)
@@ -223,6 +239,8 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'role': role.toJson(),
       if (profileImage != null) 'profileImage': profileImage,
       if (fcmToken != null) 'fcmToken': fcmToken,
+      'isOnline': isOnline,
+      if (lastSeen != null) 'lastSeen': lastSeen?.toJson(),
       'createdAt': createdAt.toJson(),
       if (rooms != null)
         'rooms': rooms?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
@@ -305,6 +323,8 @@ class _UserImpl extends User {
     required _i3.UserRole role,
     String? profileImage,
     String? fcmToken,
+    bool? isOnline,
+    DateTime? lastSeen,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -323,6 +343,8 @@ class _UserImpl extends User {
          role: role,
          profileImage: profileImage,
          fcmToken: fcmToken,
+         isOnline: isOnline,
+         lastSeen: lastSeen,
          createdAt: createdAt,
          rooms: rooms,
          bookings: bookings,
@@ -347,6 +369,8 @@ class _UserImpl extends User {
     _i3.UserRole? role,
     Object? profileImage = _Undefined,
     Object? fcmToken = _Undefined,
+    bool? isOnline,
+    Object? lastSeen = _Undefined,
     DateTime? createdAt,
     Object? rooms = _Undefined,
     Object? bookings = _Undefined,
@@ -368,6 +392,8 @@ class _UserImpl extends User {
       role: role ?? this.role,
       profileImage: profileImage is String? ? profileImage : this.profileImage,
       fcmToken: fcmToken is String? ? fcmToken : this.fcmToken,
+      isOnline: isOnline ?? this.isOnline,
+      lastSeen: lastSeen is DateTime? ? lastSeen : this.lastSeen,
       createdAt: createdAt ?? this.createdAt,
       rooms: rooms is List<_i4.Room>?
           ? rooms
@@ -436,6 +462,17 @@ class UserUpdateTable extends _i1.UpdateTable<UserTable> {
     value,
   );
 
+  _i1.ColumnValue<bool, bool> isOnline(bool value) => _i1.ColumnValue(
+    table.isOnline,
+    value,
+  );
+
+  _i1.ColumnValue<DateTime, DateTime> lastSeen(DateTime? value) =>
+      _i1.ColumnValue(
+        table.lastSeen,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -479,6 +516,15 @@ class UserTable extends _i1.Table<int?> {
       'fcmToken',
       this,
     );
+    isOnline = _i1.ColumnBool(
+      'isOnline',
+      this,
+      hasDefault: true,
+    );
+    lastSeen = _i1.ColumnDateTime(
+      'lastSeen',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -504,6 +550,10 @@ class UserTable extends _i1.Table<int?> {
   late final _i1.ColumnString profileImage;
 
   late final _i1.ColumnString fcmToken;
+
+  late final _i1.ColumnBool isOnline;
+
+  late final _i1.ColumnDateTime lastSeen;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -747,6 +797,8 @@ class UserTable extends _i1.Table<int?> {
     role,
     profileImage,
     fcmToken,
+    isOnline,
+    lastSeen,
     createdAt,
   ];
 

@@ -140,6 +140,7 @@ class RoomRepositoryImpl implements RoomRepository {
       status: dto.status ?? RoomStatus.pending,
       ownerName: dto.owner?.fullName,
       ownerAvatarUrl: dto.owner?.profileImage,
+      ownerIsOnline: dto.owner?.isOnline ?? false,
       rejectionReason: dto.rejectionReason,
       facilities:
           dto.facilities

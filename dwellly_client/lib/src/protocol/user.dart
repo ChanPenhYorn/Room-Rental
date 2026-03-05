@@ -32,6 +32,8 @@ abstract class User implements _i1.SerializableModel {
     required this.role,
     this.profileImage,
     this.fcmToken,
+    bool? isOnline,
+    this.lastSeen,
     required this.createdAt,
     this.rooms,
     this.bookings,
@@ -39,7 +41,7 @@ abstract class User implements _i1.SerializableModel {
     this.receivedMessages,
     this.favorites,
     this.reviews,
-  });
+  }) : isOnline = isOnline ?? false;
 
   factory User({
     int? id,
@@ -52,6 +54,8 @@ abstract class User implements _i1.SerializableModel {
     required _i3.UserRole role,
     String? profileImage,
     String? fcmToken,
+    bool? isOnline,
+    DateTime? lastSeen,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -77,6 +81,10 @@ abstract class User implements _i1.SerializableModel {
       role: _i3.UserRole.fromJson((jsonSerialization['role'] as String)),
       profileImage: jsonSerialization['profileImage'] as String?,
       fcmToken: jsonSerialization['fcmToken'] as String?,
+      isOnline: jsonSerialization['isOnline'] as bool?,
+      lastSeen: jsonSerialization['lastSeen'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['lastSeen']),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -136,6 +144,10 @@ abstract class User implements _i1.SerializableModel {
 
   String? fcmToken;
 
+  bool isOnline;
+
+  DateTime? lastSeen;
+
   DateTime createdAt;
 
   List<_i4.Room>? rooms;
@@ -164,6 +176,8 @@ abstract class User implements _i1.SerializableModel {
     _i3.UserRole? role,
     String? profileImage,
     String? fcmToken,
+    bool? isOnline,
+    DateTime? lastSeen,
     DateTime? createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -186,6 +200,8 @@ abstract class User implements _i1.SerializableModel {
       'role': role.toJson(),
       if (profileImage != null) 'profileImage': profileImage,
       if (fcmToken != null) 'fcmToken': fcmToken,
+      'isOnline': isOnline,
+      if (lastSeen != null) 'lastSeen': lastSeen?.toJson(),
       'createdAt': createdAt.toJson(),
       if (rooms != null) 'rooms': rooms?.toJson(valueToJson: (v) => v.toJson()),
       if (bookings != null)
@@ -223,6 +239,8 @@ class _UserImpl extends User {
     required _i3.UserRole role,
     String? profileImage,
     String? fcmToken,
+    bool? isOnline,
+    DateTime? lastSeen,
     required DateTime createdAt,
     List<_i4.Room>? rooms,
     List<_i5.Booking>? bookings,
@@ -241,6 +259,8 @@ class _UserImpl extends User {
          role: role,
          profileImage: profileImage,
          fcmToken: fcmToken,
+         isOnline: isOnline,
+         lastSeen: lastSeen,
          createdAt: createdAt,
          rooms: rooms,
          bookings: bookings,
@@ -265,6 +285,8 @@ class _UserImpl extends User {
     _i3.UserRole? role,
     Object? profileImage = _Undefined,
     Object? fcmToken = _Undefined,
+    bool? isOnline,
+    Object? lastSeen = _Undefined,
     DateTime? createdAt,
     Object? rooms = _Undefined,
     Object? bookings = _Undefined,
@@ -286,6 +308,8 @@ class _UserImpl extends User {
       role: role ?? this.role,
       profileImage: profileImage is String? ? profileImage : this.profileImage,
       fcmToken: fcmToken is String? ? fcmToken : this.fcmToken,
+      isOnline: isOnline ?? this.isOnline,
+      lastSeen: lastSeen is DateTime? ? lastSeen : this.lastSeen,
       createdAt: createdAt ?? this.createdAt,
       rooms: rooms is List<_i4.Room>?
           ? rooms

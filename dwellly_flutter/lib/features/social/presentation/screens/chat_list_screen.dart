@@ -151,7 +151,7 @@ class ChatListScreen extends ConsumerWidget {
               userId: contactId,
               userName: contactName,
               avatarUrl: avatarUrl,
-              isOnline: false,
+              isOnline: contact?.isOnline ?? false,
             ),
           ),
         );

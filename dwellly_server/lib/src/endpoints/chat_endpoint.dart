@@ -11,6 +11,11 @@ class ChatEndpoint extends Endpoint {
   Future<void> streamOpened(StreamingSession session) async {
     final user = await UserUtils.getOrCreateUser(session);
     if (user != null && user.id != null) {
+      // Update online status in database
+      user.isOnline = true;
+      user.lastSeen = DateTime.now();
+      await User.db.updateRow(session, user);
+
       // Add user to their private channel based on their User ID
       session.messages.addListener('channel_user_${user.id}', (message) {
         sendStreamMessage(session, message);
@@ -23,7 +28,11 @@ class ChatEndpoint extends Endpoint {
   Future<void> streamClosed(StreamingSession session) async {
     final user = await UserUtils.getOrCreateUser(session);
     if (user != null && user.id != null) {
-      // Optionally handle disconnection
+      // Update offline status in database
+      user.isOnline = false;
+      user.lastSeen = DateTime.now();
+      await User.db.updateRow(session, user);
+
       session.log('User ${user.id} disconnected from chat stream.');
     }
   }

@@ -10,6 +10,8 @@ fields:
   role: UserRole
   profileImage: String?
   fcmToken: String?
+  isOnline: bool, default=false
+  lastSeen: DateTime?
   createdAt: DateTime
   rooms: List<Room>?, relation(name=user_rooms)
   bookings: List<Booking>?, relation(name=user_bookings)

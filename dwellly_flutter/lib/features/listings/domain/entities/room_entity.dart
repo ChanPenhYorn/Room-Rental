@@ -24,6 +24,7 @@ class RoomEntity with _$RoomEntity {
     @Default(RoomStatus.pending) RoomStatus status,
     String? ownerName,
     String? ownerAvatarUrl,
+    @Default(false) bool ownerIsOnline,
     String? rejectionReason,
     @Default(false) bool hasPendingEdit,
     String? pendingData,
