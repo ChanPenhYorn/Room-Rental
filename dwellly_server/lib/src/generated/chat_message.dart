@@ -24,9 +24,14 @@ abstract class ChatMessage
     required this.receiverId,
     this.receiver,
     required this.message,
+    String? messageType,
+    this.attachmentUrl,
+    this.attachmentDuration,
+    this.attachmentName,
+    this.attachmentSize,
     required this.sentAt,
     required this.isRead,
-  });
+  }) : messageType = messageType ?? 'text';
 
   factory ChatMessage({
     int? id,
@@ -35,6 +40,11 @@ abstract class ChatMessage
     required int receiverId,
     _i2.User? receiver,
     required String message,
+    String? messageType,
+    String? attachmentUrl,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
     required DateTime sentAt,
     required bool isRead,
   }) = _ChatMessageImpl;
@@ -51,6 +61,11 @@ abstract class ChatMessage
           ? null
           : _i3.Protocol().deserialize<_i2.User>(jsonSerialization['receiver']),
       message: jsonSerialization['message'] as String,
+      messageType: jsonSerialization['messageType'] as String?,
+      attachmentUrl: jsonSerialization['attachmentUrl'] as String?,
+      attachmentDuration: jsonSerialization['attachmentDuration'] as int?,
+      attachmentName: jsonSerialization['attachmentName'] as String?,
+      attachmentSize: jsonSerialization['attachmentSize'] as int?,
       sentAt: _i1.DateTimeJsonExtension.fromJson(jsonSerialization['sentAt']),
       isRead: jsonSerialization['isRead'] as bool,
     );
@@ -73,6 +88,16 @@ abstract class ChatMessage
 
   String message;
 
+  String messageType;
+
+  String? attachmentUrl;
+
+  int? attachmentDuration;
+
+  String? attachmentName;
+
+  int? attachmentSize;
+
   DateTime sentAt;
 
   bool isRead;
@@ -90,6 +115,11 @@ abstract class ChatMessage
     int? receiverId,
     _i2.User? receiver,
     String? message,
+    String? messageType,
+    String? attachmentUrl,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
     DateTime? sentAt,
     bool? isRead,
   });
@@ -103,6 +133,11 @@ abstract class ChatMessage
       'receiverId': receiverId,
       if (receiver != null) 'receiver': receiver?.toJson(),
       'message': message,
+      'messageType': messageType,
+      if (attachmentUrl != null) 'attachmentUrl': attachmentUrl,
+      if (attachmentDuration != null) 'attachmentDuration': attachmentDuration,
+      if (attachmentName != null) 'attachmentName': attachmentName,
+      if (attachmentSize != null) 'attachmentSize': attachmentSize,
       'sentAt': sentAt.toJson(),
       'isRead': isRead,
     };
@@ -118,6 +153,11 @@ abstract class ChatMessage
       'receiverId': receiverId,
       if (receiver != null) 'receiver': receiver?.toJsonForProtocol(),
       'message': message,
+      'messageType': messageType,
+      if (attachmentUrl != null) 'attachmentUrl': attachmentUrl,
+      if (attachmentDuration != null) 'attachmentDuration': attachmentDuration,
+      if (attachmentName != null) 'attachmentName': attachmentName,
+      if (attachmentSize != null) 'attachmentSize': attachmentSize,
       'sentAt': sentAt.toJson(),
       'isRead': isRead,
     };
@@ -169,6 +209,11 @@ class _ChatMessageImpl extends ChatMessage {
     required int receiverId,
     _i2.User? receiver,
     required String message,
+    String? messageType,
+    String? attachmentUrl,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
     required DateTime sentAt,
     required bool isRead,
   }) : super._(
@@ -178,6 +223,11 @@ class _ChatMessageImpl extends ChatMessage {
          receiverId: receiverId,
          receiver: receiver,
          message: message,
+         messageType: messageType,
+         attachmentUrl: attachmentUrl,
+         attachmentDuration: attachmentDuration,
+         attachmentName: attachmentName,
+         attachmentSize: attachmentSize,
          sentAt: sentAt,
          isRead: isRead,
        );
@@ -193,6 +243,11 @@ class _ChatMessageImpl extends ChatMessage {
     int? receiverId,
     Object? receiver = _Undefined,
     String? message,
+    String? messageType,
+    Object? attachmentUrl = _Undefined,
+    Object? attachmentDuration = _Undefined,
+    Object? attachmentName = _Undefined,
+    Object? attachmentSize = _Undefined,
     DateTime? sentAt,
     bool? isRead,
   }) {
@@ -203,6 +258,19 @@ class _ChatMessageImpl extends ChatMessage {
       receiverId: receiverId ?? this.receiverId,
       receiver: receiver is _i2.User? ? receiver : this.receiver?.copyWith(),
       message: message ?? this.message,
+      messageType: messageType ?? this.messageType,
+      attachmentUrl: attachmentUrl is String?
+          ? attachmentUrl
+          : this.attachmentUrl,
+      attachmentDuration: attachmentDuration is int?
+          ? attachmentDuration
+          : this.attachmentDuration,
+      attachmentName: attachmentName is String?
+          ? attachmentName
+          : this.attachmentName,
+      attachmentSize: attachmentSize is int?
+          ? attachmentSize
+          : this.attachmentSize,
       sentAt: sentAt ?? this.sentAt,
       isRead: isRead ?? this.isRead,
     );
@@ -224,6 +292,33 @@ class ChatMessageUpdateTable extends _i1.UpdateTable<ChatMessageTable> {
 
   _i1.ColumnValue<String, String> message(String value) => _i1.ColumnValue(
     table.message,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> messageType(String value) => _i1.ColumnValue(
+    table.messageType,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> attachmentUrl(String? value) =>
+      _i1.ColumnValue(
+        table.attachmentUrl,
+        value,
+      );
+
+  _i1.ColumnValue<int, int> attachmentDuration(int? value) => _i1.ColumnValue(
+    table.attachmentDuration,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> attachmentName(String? value) =>
+      _i1.ColumnValue(
+        table.attachmentName,
+        value,
+      );
+
+  _i1.ColumnValue<int, int> attachmentSize(int? value) => _i1.ColumnValue(
+    table.attachmentSize,
     value,
   );
 
@@ -253,6 +348,27 @@ class ChatMessageTable extends _i1.Table<int?> {
       'message',
       this,
     );
+    messageType = _i1.ColumnString(
+      'messageType',
+      this,
+      hasDefault: true,
+    );
+    attachmentUrl = _i1.ColumnString(
+      'attachmentUrl',
+      this,
+    );
+    attachmentDuration = _i1.ColumnInt(
+      'attachmentDuration',
+      this,
+    );
+    attachmentName = _i1.ColumnString(
+      'attachmentName',
+      this,
+    );
+    attachmentSize = _i1.ColumnInt(
+      'attachmentSize',
+      this,
+    );
     sentAt = _i1.ColumnDateTime(
       'sentAt',
       this,
@@ -274,6 +390,16 @@ class ChatMessageTable extends _i1.Table<int?> {
   _i2.UserTable? _receiver;
 
   late final _i1.ColumnString message;
+
+  late final _i1.ColumnString messageType;
+
+  late final _i1.ColumnString attachmentUrl;
+
+  late final _i1.ColumnInt attachmentDuration;
+
+  late final _i1.ColumnString attachmentName;
+
+  late final _i1.ColumnInt attachmentSize;
 
   late final _i1.ColumnDateTime sentAt;
 
@@ -311,6 +437,11 @@ class ChatMessageTable extends _i1.Table<int?> {
     senderId,
     receiverId,
     message,
+    messageType,
+    attachmentUrl,
+    attachmentDuration,
+    attachmentName,
+    attachmentSize,
     sentAt,
     isRead,
   ];

@@ -358,6 +358,42 @@ class EndpointChat extends _i2.EndpointRef {
         'markAsRead',
         {'otherUserId': otherUserId},
       );
+
+  /// Upload a file (image, audio, or document) and return its URL
+  _i3.Future<String?> uploadAttachment(
+    String fileBase64,
+    String fileName,
+  ) => caller.callServerEndpoint<String?>(
+    'chat',
+    'uploadAttachment',
+    {
+      'fileBase64': fileBase64,
+      'fileName': fileName,
+    },
+  );
+
+  /// Send a message with attachment (voice, image, or file)
+  _i3.Future<_i7.ChatMessage?> sendAttachmentMessage(
+    int receiverId,
+    String messageType,
+    String attachmentUrl, {
+    String? message,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
+  }) => caller.callServerEndpoint<_i7.ChatMessage?>(
+    'chat',
+    'sendAttachmentMessage',
+    {
+      'receiverId': receiverId,
+      'messageType': messageType,
+      'attachmentUrl': attachmentUrl,
+      'message': message,
+      'attachmentDuration': attachmentDuration,
+      'attachmentName': attachmentName,
+      'attachmentSize': attachmentSize,
+    },
+  );
 }
 
 /// {@category Endpoint}

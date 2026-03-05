@@ -508,6 +508,86 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['otherUserId'],
               ),
         ),
+        'uploadAttachment': _i1.MethodConnector(
+          name: 'uploadAttachment',
+          params: {
+            'fileBase64': _i1.ParameterDescription(
+              name: 'fileBase64',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'fileName': _i1.ParameterDescription(
+              name: 'fileName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['chat'] as _i6.ChatEndpoint).uploadAttachment(
+                    session,
+                    params['fileBase64'],
+                    params['fileName'],
+                  ),
+        ),
+        'sendAttachmentMessage': _i1.MethodConnector(
+          name: 'sendAttachmentMessage',
+          params: {
+            'receiverId': _i1.ParameterDescription(
+              name: 'receiverId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'messageType': _i1.ParameterDescription(
+              name: 'messageType',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'attachmentUrl': _i1.ParameterDescription(
+              name: 'attachmentUrl',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'message': _i1.ParameterDescription(
+              name: 'message',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'attachmentDuration': _i1.ParameterDescription(
+              name: 'attachmentDuration',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'attachmentName': _i1.ParameterDescription(
+              name: 'attachmentName',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'attachmentSize': _i1.ParameterDescription(
+              name: 'attachmentSize',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['chat'] as _i6.ChatEndpoint).sendAttachmentMessage(
+                    session,
+                    params['receiverId'],
+                    params['messageType'],
+                    params['attachmentUrl'],
+                    message: params['message'],
+                    attachmentDuration: params['attachmentDuration'],
+                    attachmentName: params['attachmentName'],
+                    attachmentSize: params['attachmentSize'],
+                  ),
+        ),
       },
     );
     connectors['dev'] = _i1.EndpointConnector(

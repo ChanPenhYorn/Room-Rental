@@ -92,6 +92,43 @@ class CloudinaryService {
     }
   }
 
+  /// Uploads a file (audio, video, or any file) from bytes.
+  Future<CloudinaryResponse?> uploadFile(
+    Session session,
+    List<int> bytes,
+    String fileName, {
+    String? folder,
+    String? publicId,
+  }) async {
+    try {
+      final resourceType = _getResourceType(fileName);
+      return await client.upload(
+        fileBytes: bytes,
+        folder: folder,
+        publicId: publicId,
+        resourceType: resourceType,
+      );
+    } catch (e, stack) {
+      session.log(
+        'Cloudinary upload file error ($fileName): $e',
+        level: LogLevel.error,
+        stackTrace: stack,
+      );
+      return null;
+    }
+  }
+
+  CloudinaryResourceType _getResourceType(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    if (['mp3', 'wav', 'aac', 'm4a', 'ogg', 'flac'].contains(ext)) {
+      return CloudinaryResourceType.video;
+    }
+    if (['mp4', 'mov', 'avi', 'mkv', 'webm'].contains(ext)) {
+      return CloudinaryResourceType.video;
+    }
+    return CloudinaryResourceType.raw;
+  }
+
   /// Extracts the public ID from a Cloudinary URL and deletes it
   Future<bool> deleteImage(Session session, String imageUrl) async {
     try {

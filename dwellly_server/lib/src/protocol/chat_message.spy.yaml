@@ -6,5 +6,10 @@ fields:
   receiverId: int
   receiver: User?, relation(name=receiver_messages, field=receiverId)
   message: String
+  messageType: String, default="text"
+  attachmentUrl: String?
+  attachmentDuration: int?
+  attachmentName: String?
+  attachmentSize: int?
   sentAt: DateTime
   isRead: bool

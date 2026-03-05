@@ -21,6 +21,8 @@ chat:
   - getConversations:
   - getMessagesWithUser:
   - markAsRead:
+  - uploadAttachment:
+  - sendAttachmentMessage:
 dev:
   - getRegistrationCode:
 favorite:

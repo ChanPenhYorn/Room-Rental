@@ -110,7 +110,39 @@ class ChatHistoryController
 
   Future<void> markRead() async {
     await _repository.markAsRead(arg);
-    // Refresh conversations list to update unread counts/dots in UI list
     ref.read(conversationsProvider.notifier).refresh();
+  }
+
+  Future<void> sendAttachmentMessage({
+    required String messageType,
+    required String attachmentUrl,
+    String? message,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
+  }) async {
+    try {
+      final newMessage = await _repository.sendAttachmentMessage(
+        arg,
+        messageType,
+        attachmentUrl,
+        message: message,
+        attachmentDuration: attachmentDuration,
+        attachmentName: attachmentName,
+        attachmentSize: attachmentSize,
+      );
+      if (newMessage != null) {
+        final currentMessages = state.value ?? [];
+        if (!currentMessages.any((m) => m.id == newMessage.id)) {
+          state = AsyncValue.data([...currentMessages, newMessage]);
+        }
+      }
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<String?> uploadAttachment(String fileBase64, String fileName) async {
+    return await _repository.uploadAttachment(fileBase64, fileName);
   }
 }

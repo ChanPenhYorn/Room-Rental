@@ -9,6 +9,16 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 
 abstract class ChatRepository {
   Future<ChatMessage?> sendMessage(int receiverId, String content);
+  Future<ChatMessage?> sendAttachmentMessage(
+    int receiverId,
+    String messageType,
+    String attachmentUrl, {
+    String? message,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
+  });
+  Future<String?> uploadAttachment(String fileBase64, String fileName);
   Future<List<ChatMessage>> getConversations();
   Future<List<ChatMessage>> getMessagesWithUser(int otherUserId);
   Future<void> markAsRead(int otherUserId);
@@ -35,6 +45,40 @@ class ChatRepositoryImpl implements ChatRepository {
       return await _client.chat.sendMessage(receiverId, content);
     } catch (e) {
       throw Exception('Failed to send message: $e');
+    }
+  }
+
+  @override
+  Future<ChatMessage?> sendAttachmentMessage(
+    int receiverId,
+    String messageType,
+    String attachmentUrl, {
+    String? message,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
+  }) async {
+    try {
+      return await _client.chat.sendAttachmentMessage(
+        receiverId,
+        messageType,
+        attachmentUrl,
+        message: message,
+        attachmentDuration: attachmentDuration,
+        attachmentName: attachmentName,
+        attachmentSize: attachmentSize,
+      );
+    } catch (e) {
+      throw Exception('Failed to send attachment message: $e');
+    }
+  }
+
+  @override
+  Future<String?> uploadAttachment(String fileBase64, String fileName) async {
+    try {
+      return await _client.chat.uploadAttachment(fileBase64, fileName);
+    } catch (e) {
+      throw Exception('Failed to upload attachment: $e');
     }
   }
 

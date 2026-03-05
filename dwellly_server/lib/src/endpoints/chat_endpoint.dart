@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../utils/user_utils.dart';
 import '../utils/notification_utils.dart';
+import '../utils/cloudinary_service.dart';
 
 class ChatEndpoint extends Endpoint {
   @override
@@ -156,5 +158,109 @@ class ChatEndpoint extends Endpoint {
     await session.db.unsafeSimpleQuery(
       'UPDATE chat_message SET "isRead" = true WHERE "receiverId" = ${user.id} AND "senderId" = $otherUserId AND "isRead" = false',
     );
+  }
+
+  /// Upload a file (image, audio, or document) and return its URL
+  Future<String?> uploadAttachment(
+    Session session,
+    String fileBase64,
+    String fileName,
+  ) async {
+    final user = await UserUtils.getOrCreateUser(session);
+    if (user == null || user.id == null) return null;
+
+    try {
+      final service = CloudinaryService(session);
+      var base64String = fileBase64;
+      if (base64String.contains(',')) {
+        base64String = base64String.split(',').last;
+      }
+
+      final bytes = base64Decode(base64String);
+      final response = await service.uploadFile(
+        session,
+        bytes,
+        fileName,
+        folder: 'chat/${user.id}',
+      );
+
+      return response?.secureUrl;
+    } catch (e, stack) {
+      session.log(
+        'uploadAttachment: Error uploading file: $e',
+        level: LogLevel.error,
+        stackTrace: stack,
+      );
+      return null;
+    }
+  }
+
+  /// Send a message with attachment (voice, image, or file)
+  Future<ChatMessage?> sendAttachmentMessage(
+    Session session,
+    int receiverId,
+    String messageType,
+    String attachmentUrl, {
+    String? message,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
+  }) async {
+    final user = await UserUtils.getOrCreateUser(session);
+    if (user == null || user.id == null) return null;
+
+    final chatMessage = ChatMessage(
+      senderId: user.id!,
+      receiverId: receiverId,
+      message: message ?? '',
+      messageType: messageType,
+      attachmentUrl: attachmentUrl,
+      attachmentDuration: attachmentDuration,
+      attachmentName: attachmentName,
+      attachmentSize: attachmentSize,
+      sentAt: DateTime.now(),
+      isRead: false,
+    );
+
+    final savedMessage = await ChatMessage.db.insertRow(session, chatMessage);
+    if (savedMessage != null) {
+      final fullMessage = await ChatMessage.db.findById(
+        session,
+        savedMessage.id!,
+        include: ChatMessage.include(
+          sender: User.include(),
+          receiver: User.include(),
+        ),
+      );
+
+      if (fullMessage != null) {
+        session.messages.postMessage(
+          'channel_user_$receiverId',
+          fullMessage,
+        );
+        session.messages.postMessage(
+          'channel_user_${user.id}',
+          fullMessage,
+        );
+
+        final body = messageType == 'voice'
+            ? 'Voice message'
+            : message ?? 'Sent an attachment';
+
+        await NotificationUtils.sendNotification(
+          session,
+          recipientId: receiverId,
+          title: 'New Message from ${fullMessage.sender?.fullName ?? "User"}',
+          body: body,
+          data: {
+            'type': 'chat',
+            'senderId': fullMessage.senderId.toString(),
+            'senderName': fullMessage.sender?.fullName ?? "User",
+            'senderAvatar': fullMessage.sender?.profileImage ?? "",
+          },
+        );
+      }
+    }
+    return savedMessage;
   }
 }
