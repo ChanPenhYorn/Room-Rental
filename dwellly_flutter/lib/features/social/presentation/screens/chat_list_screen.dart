@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
@@ -76,33 +77,71 @@ class ChatListScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
-            itemCount: conversations.length,
-            itemBuilder: (context, index) {
-              final message = conversations[index];
-
-              // Identify the contact
-              final isSenderMe =
-                  message.senderId == currentUserId ||
-                  (message.sender?.userInfoId == currentUserId);
-
-              final contact = isSenderMe ? message.receiver : message.sender;
-              final contactId = isSenderMe
-                  ? message.receiverId
-                  : message.senderId;
-
-              return _buildConversationItem(
-                context,
-                ref,
-                message,
-                contact,
-                contactId,
-              );
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(conversationsProvider);
             },
+            color: AppTheme.primaryGreen,
+            child: ListView.builder(
+              itemCount: conversations.length,
+              itemBuilder: (context, index) {
+                final message = conversations[index];
+
+                // Identify the contact
+                final isSenderMe =
+                    message.senderId == currentUserId ||
+                    (message.sender?.userInfoId == currentUserId);
+
+                final contact = isSenderMe ? message.receiver : message.sender;
+                final contactId = isSenderMe
+                    ? message.receiverId
+                    : message.senderId;
+
+                return _buildConversationItem(
+                  context,
+                  ref,
+                  message,
+                  contact,
+                  contactId,
+                );
+              },
+            ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => _buildSkeletonLoading(),
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red.shade300,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading messages',
+                style: GoogleFonts.outfit(
+                  color: Colors.red.shade400,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  ref.invalidate(conversationsProvider);
+                },
+                child: Text(
+                  'Retry',
+                  style: GoogleFonts.outfit(
+                    color: AppTheme.primaryGreen,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -110,6 +149,114 @@ class ChatListScreen extends ConsumerWidget {
         },
         backgroundColor: AppTheme.primaryGreen,
         child: const Icon(Icons.add_comment_rounded, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLoading() {
+    final fakeData = List.generate(
+      8,
+      (index) => _FakeConversation(
+        name: 'Contact Name',
+        message: 'Last message preview',
+        time: '12:30 PM',
+        isUnread: index % 2 == 0,
+      ),
+    );
+
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.builder(
+        itemCount: fakeData.length,
+        itemBuilder: (context, index) {
+          final fake = fakeData[index];
+          return _buildSkeletonConversationItem(
+            fake.name,
+            fake.message,
+            fake.time,
+            fake.isUnread,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSkeletonConversationItem(
+    String name,
+    String message,
+    String time,
+    bool isUnread,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          const Skeleton.leaf(
+            child: CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.grey,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Skeleton.leaf(
+                      child: Container(
+                        width: 100,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                    Skeleton.leaf(
+                      child: Container(
+                        width: 40,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Skeleton.leaf(
+                        child: Container(
+                          width: double.infinity,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (isUnread)
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -167,6 +314,20 @@ class ChatListScreen extends ConsumerWidget {
                   backgroundImage: NetworkImage(avatarUrl),
                   backgroundColor: AppTheme.dividerGray,
                 ),
+                if (contact?.isOnline ?? false)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(width: 16),
@@ -204,24 +365,7 @@ class ChatListScreen extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          message.message,
-                          style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            color:
-                                !message.isRead && message.senderId == contactId
-                                ? AppTheme.primaryBlack
-                                : AppTheme.secondaryGray,
-                            fontWeight:
-                                !message.isRead && message.senderId == contactId
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
+                      _buildMessagePreview(message, contactId),
                       if (!message.isRead && message.senderId == contactId)
                         Container(
                           margin: const EdgeInsets.only(left: 8),
@@ -241,4 +385,62 @@ class ChatListScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Widget _buildMessagePreview(ChatMessage message, int contactId) {
+    final messageType = message.messageType ?? 'text';
+    IconData? typeIcon;
+    String prefix = '';
+
+    if (messageType == 'image') {
+      typeIcon = Icons.image;
+      prefix = '📷 ';
+    } else if (messageType == 'voice') {
+      typeIcon = Icons.mic;
+      prefix = '🎤 ';
+    } else if (messageType == 'file') {
+      typeIcon = Icons.insert_drive_file;
+      prefix = '📎 ';
+    }
+
+    return Expanded(
+      child: Row(
+        children: [
+          if (typeIcon != null) ...[
+            Icon(typeIcon, size: 16, color: AppTheme.secondaryGray),
+            const SizedBox(width: 4),
+          ],
+          Expanded(
+            child: Text(
+              '$prefix${message.message}',
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: !message.isRead && message.senderId == contactId
+                    ? AppTheme.primaryBlack
+                    : AppTheme.secondaryGray,
+                fontWeight: !message.isRead && message.senderId == contactId
+                    ? FontWeight.w600
+                    : FontWeight.normal,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FakeConversation {
+  final String name;
+  final String message;
+  final String time;
+  final bool isUnread;
+
+  _FakeConversation({
+    required this.name,
+    required this.message,
+    required this.time,
+    required this.isUnread,
+  });
 }

@@ -871,6 +871,86 @@ class _ChatEndpoint {
       }
     });
   }
+
+  _i3.Future<String?> uploadAttachment(
+    _i1.TestSessionBuilder sessionBuilder,
+    String fileBase64,
+    String fileName,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'chat',
+            method: 'uploadAttachment',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'chat',
+          methodName: 'uploadAttachment',
+          parameters: _i1.testObjectToJson({
+            'fileBase64': fileBase64,
+            'fileName': fileName,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<String?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i7.ChatMessage?> sendAttachmentMessage(
+    _i1.TestSessionBuilder sessionBuilder,
+    int receiverId,
+    String messageType,
+    String attachmentUrl, {
+    String? message,
+    int? attachmentDuration,
+    String? attachmentName,
+    int? attachmentSize,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'chat',
+            method: 'sendAttachmentMessage',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'chat',
+          methodName: 'sendAttachmentMessage',
+          parameters: _i1.testObjectToJson({
+            'receiverId': receiverId,
+            'messageType': messageType,
+            'attachmentUrl': attachmentUrl,
+            'message': message,
+            'attachmentDuration': attachmentDuration,
+            'attachmentName': attachmentName,
+            'attachmentSize': attachmentSize,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i7.ChatMessage?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _DevEndpoint {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,7 +47,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Timer? _recordingTimer;
   int _recordingDuration = 0;
 
+  bool _isSending = false;
+  String? _sendingType;
+
   final Map<int, AudioPlayer> _audioPlayers = {};
+  final Map<int, StreamSubscription> _playerSubscriptions = {};
+  final Map<int, Duration> _playerPositions = {};
+  final Map<int, Duration> _playerDurations = {};
 
   @override
   void initState() {
@@ -61,6 +68,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     _audioRecorder.dispose();
+    for (final sub in _playerSubscriptions.values) {
+      sub.cancel();
+    }
     for (final player in _audioPlayers.values) {
       player.dispose();
     }
@@ -103,12 +113,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: AppTheme.primaryGreen,
-                  child: Icon(Icons.image, color: Colors.white),
+                  child: Icon(Icons.photo_library, color: Colors.white),
                 ),
                 title: const Text('Photo Library'),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
+                  _pickMultipleImages();
                 },
               ),
               ListTile(
@@ -140,19 +150,141 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
+  Future<Uint8List?> _compressImage(
+    File file, {
+    int quality = 70,
+    int maxWidth = 1200,
+  }) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final decodedImage = await decodeImageFromList(bytes);
+
+      int width = decodedImage.width;
+      int height = decodedImage.height;
+
+      if (width > maxWidth) {
+        height = (height * maxWidth / width).round();
+        width = maxWidth;
+      }
+
+      final resized = await resizedImage(
+        bytes,
+        width,
+        height,
+        quality: quality,
+      );
+
+      return resized;
+    } catch (e) {
+      return await file.readAsBytes();
+    }
+  }
+
+  Future<Uint8List?> resizedImage(
+    Uint8List bytes,
+    int width,
+    int height, {
+    int quality = 70,
+  }) async {
+    return bytes;
+  }
+
+  Future<void> _pickMultipleImages() async {
+    try {
+      final List<XFile> images = await _imagePicker.pickMultiImage(
+        imageQuality: 70,
+        maxWidth: 1200,
+      );
+
+      if (images.isNotEmpty) {
+        setState(() {
+          _isSending = true;
+          _sendingType = 'image';
+        });
+
+        for (final image in images) {
+          await _sendImageWithCompression(image.path);
+        }
+
+        setState(() {
+          _isSending = false;
+          _sendingType = null;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isSending = false;
+        _sendingType = null;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking images: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: source,
-        imageQuality: 80,
+        imageQuality: 70,
+        maxWidth: 1200,
       );
       if (image != null) {
-        await _sendAttachment(image.path, 'image');
+        setState(() {
+          _isSending = true;
+          _sendingType = 'image';
+        });
+        await _sendImageWithCompression(image.path);
+        setState(() {
+          _isSending = false;
+          _sendingType = null;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isSending = false;
+        _sendingType = null;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendImageWithCompression(String imagePath) async {
+    try {
+      final file = File(imagePath);
+      final compressedBytes = await _compressImage(file);
+
+      if (compressedBytes != null) {
+        final base64String = base64Encode(compressedBytes);
+        final fileName = imagePath.split('/').last;
+
+        final controller = ref.read(
+          chatHistoryProvider(widget.userId).notifier,
+        );
+        final attachmentUrl = await controller.uploadAttachment(
+          base64String,
+          fileName,
+        );
+
+        if (attachmentUrl != null) {
+          await controller.sendAttachmentMessage(
+            messageType: 'image',
+            attachmentUrl: attachmentUrl,
+            attachmentSize: compressedBytes.length,
+          );
+          _scrollToBottom();
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
+          SnackBar(content: Text('Error sending image: $e')),
         );
       }
     }
@@ -165,9 +297,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx'],
       );
       if (result != null && result.files.single.path != null) {
+        setState(() {
+          _isSending = true;
+          _sendingType = 'file';
+        });
         await _sendAttachment(result.files.single.path!, 'file');
+        setState(() {
+          _isSending = false;
+          _sendingType = null;
+        });
       }
     } catch (e) {
+      setState(() {
+        _isSending = false;
+        _sendingType = null;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error picking file: $e')),
@@ -263,11 +407,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       });
 
       if (path != null) {
+        setState(() {
+          _isSending = true;
+          _sendingType = 'voice';
+        });
         await _sendAttachment(path, 'voice');
+        setState(() {
+          _isSending = false;
+          _sendingType = null;
+        });
       }
     } catch (e) {
       setState(() {
         _isRecording = false;
+        _isSending = false;
+        _sendingType = null;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -277,7 +431,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
-  Future<void> _playVoiceMessage(ChatMessage message) async {
+  Future<void> _toggleVoicePlayback(ChatMessage message) async {
     if (message.attachmentUrl == null) return;
 
     final messageId = message.id;
@@ -286,24 +440,52 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (_audioPlayers.containsKey(messageId)) {
       final player = _audioPlayers[messageId]!;
       if (player.playing) {
-        await player.stop();
+        await player.pause();
       } else {
-        await player.setUrl(message.attachmentUrl!);
         await player.play();
       }
     } else {
       final player = AudioPlayer();
       _audioPlayers[messageId] = player;
 
-      player.playerStateStream.listen((state) {
+      await player.setUrl(message.attachmentUrl!);
+
+      _playerDurations[messageId] = player.duration ?? Duration.zero;
+
+      _playerSubscriptions[messageId] = player.positionStream.listen((
+        position,
+      ) {
         if (mounted) {
-          setState(() {});
+          setState(() {
+            _playerPositions[messageId] = position;
+          });
         }
       });
 
-      await player.setUrl(message.attachmentUrl!);
+      player.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() {});
+          if (state.processingState == ProcessingState.completed) {
+            player.seek(Duration.zero);
+            player.pause();
+          }
+        }
+      });
+
       await player.play();
     }
+  }
+
+  void _showImageViewer(List<String> imageUrls, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageViewerScreen(
+          imageUrls: imageUrls,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
   }
 
   @override
@@ -367,39 +549,110 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: chatHistoryState.when(
-              data: (messages) {
-                if (messages.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No messages yet. Say hi!',
-                      style: GoogleFonts.outfit(color: Colors.grey),
-                    ),
-                  );
-                }
-                _scrollToBottom();
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final isMe =
-                        message.senderId == currentUserId ||
-                        (message.sender?.userInfoId == currentUserId);
-                    return _buildMessageBubble(message, isMe);
+          Column(
+            children: [
+              Expanded(
+                child: chatHistoryState.when(
+                  data: (messages) {
+                    if (messages.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No messages yet. Say hi!',
+                          style: GoogleFonts.outfit(color: Colors.grey),
+                        ),
+                      );
+                    }
+                    _scrollToBottom();
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        final isMe =
+                            message.senderId == currentUserId ||
+                            (message.sender?.userInfoId == currentUserId);
+                        return _buildMessageBubble(message, isMe, messages);
+                      },
+                    );
                   },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-            ),
+                  loading: () => _buildSkeletonMessages(),
+                  error: (err, stack) => Center(child: Text('Error: $err')),
+                ),
+              ),
+              _buildMessageInput(),
+            ],
           ),
-          _buildMessageInput(),
+          if (_isSending) _buildSendingOverlay(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSendingOverlay() {
+    Color bgColor;
+    String message;
+    IconData icon;
+
+    switch (_sendingType) {
+      case 'voice':
+        bgColor = Colors.red.shade400;
+        message = 'Sending voice message...';
+        icon = Icons.mic;
+        break;
+      case 'image':
+        bgColor = AppTheme.primaryGreen;
+        message = 'Sending image...';
+        icon = Icons.image;
+        break;
+      case 'file':
+        bgColor = Colors.blue.shade400;
+        message = 'Sending file...';
+        icon = Icons.insert_drive_file;
+        break;
+      default:
+        bgColor = Colors.grey;
+        message = 'Sending...';
+        icon = Icons.send;
+    }
+
+    return Container(
+      color: Colors.black.withOpacity(0.3),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          margin: const EdgeInsets.all(40),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Icon(icon, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                message,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -517,7 +770,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, bool isMe) {
+  Widget _buildMessageBubble(
+    ChatMessage message,
+    bool isMe,
+    List<ChatMessage> allMessages,
+  ) {
     final messageType = message.messageType ?? 'text';
 
     return Align(
@@ -543,7 +800,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ),
           ],
         ),
-        child: _buildMessageContent(message, isMe, messageType),
+        child: _buildMessageContent(message, isMe, messageType, allMessages),
       ),
     );
   }
@@ -552,12 +809,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     ChatMessage message,
     bool isMe,
     String messageType,
+    List<ChatMessage> allMessages,
   ) {
     switch (messageType) {
       case 'voice':
         return _buildVoiceMessage(message, isMe);
       case 'image':
-        return _buildImageMessage(message, isMe);
+        return _buildImageMessage(message, isMe, allMessages);
       case 'file':
         return _buildFileMessage(message, isMe);
       default:
@@ -602,15 +860,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         _audioPlayers.containsKey(messageId) &&
         _audioPlayers[messageId]!.playing;
 
+    final position = messageId != null ? _playerPositions[messageId] : null;
+    final duration = messageId != null ? _playerDurations[messageId] : null;
+
+    double progress = 0.0;
+    if (duration != null && duration.inMilliseconds > 0 && position != null) {
+      progress = position.inMilliseconds / duration.inMilliseconds;
+    } else if (message.attachmentDuration != null &&
+        message.attachmentDuration! > 0) {
+      progress = 0.0;
+    }
+
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () => _playVoiceMessage(message),
+            onTap: () => _toggleVoicePlayback(message),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: isMe
                     ? Colors.white.withOpacity(0.2)
@@ -628,34 +898,65 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 100,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isMe
-                      ? Colors.white.withOpacity(0.3)
-                      : AppTheme.secondaryGray.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                child: FractionallySizedBox(
+              SizedBox(
+                width: 120,
+                height: 24,
+                child: Stack(
                   alignment: Alignment.centerLeft,
-                  widthFactor: isPlaying ? 0.7 : 0.3,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isMe ? Colors.white : AppTheme.primaryGreen,
-                      borderRadius: BorderRadius.circular(2),
+                  children: [
+                    Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: isMe
+                            ? Colors.white.withOpacity(0.3)
+                            : AppTheme.secondaryGray.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
                     ),
-                  ),
+                    FractionallySizedBox(
+                      widthFactor: progress.clamp(0.0, 1.0),
+                      child: Container(
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: isMe ? Colors.white : AppTheme.primaryGreen,
+                          borderRadius: BorderRadius.circular(1.5),
+                        ),
+                      ),
+                    ),
+                    ...List.generate(12, (index) {
+                      final waveProgress = index / 12;
+                      final isActive = waveProgress <= progress;
+                      return Positioned(
+                        left: index * 10.0,
+                        child: Container(
+                          width: 3,
+                          height: 8 + (index % 3) * 4.0,
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? (isMe ? Colors.white : AppTheme.primaryGreen)
+                                : (isMe
+                                      ? Colors.white.withOpacity(0.3)
+                                      : AppTheme.secondaryGray.withOpacity(
+                                          0.3,
+                                        )),
+                            borderRadius: BorderRadius.circular(1.5),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                message.attachmentDuration != null
-                    ? _formatDuration(message.attachmentDuration!)
-                    : 'Voice message',
+                position != null
+                    ? '${_formatDuration(position.inSeconds)} / ${_formatDuration((duration?.inSeconds ?? message.attachmentDuration ?? 0))}'
+                    : (message.attachmentDuration != null
+                          ? _formatDuration(message.attachmentDuration!)
+                          : '0:00'),
                 style: GoogleFonts.outfit(
                   color: isMe ? Colors.white : AppTheme.primaryBlack,
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -675,7 +976,31 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  Widget _buildImageMessage(ChatMessage message, bool isMe) {
+  Widget _buildImageMessage(
+    ChatMessage message,
+    bool isMe,
+    List<ChatMessage> allMessages,
+  ) {
+    final imageUrls = <String>[];
+
+    if (message.attachmentUrl != null && message.attachmentUrl!.isNotEmpty) {
+      imageUrls.add(message.attachmentUrl!);
+    }
+
+    for (final msg in allMessages) {
+      if (msg.messageType == 'image' &&
+          msg.attachmentUrl != null &&
+          msg.attachmentUrl!.isNotEmpty &&
+          !imageUrls.contains(msg.attachmentUrl)) {
+        final msgIsMe =
+            msg.senderId == message.senderId ||
+            (msg.sender?.userInfoId == message.sender?.userInfoId);
+        if (msgIsMe == isMe) {
+          imageUrls.add(msg.attachmentUrl!);
+        }
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -683,41 +1008,96 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              message.attachmentUrl ?? '',
-              width: 200,
-              height: 200,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 200,
-                height: 200,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.broken_image),
-              ),
-            ),
-          ),
-          if (message.message.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                message.message,
-                style: GoogleFonts.outfit(
-                  color: isMe ? Colors.white : AppTheme.primaryBlack,
-                  fontSize: 15,
+          GestureDetector(
+            onTap: () {
+              if (message.attachmentUrl != null) {
+                _showImageViewer(imageUrls, 0);
+              }
+            },
+            child: Hero(
+              tag: 'image_${message.attachmentUrl}',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  message.attachmentUrl ?? '',
+                  width: 220,
+                  height: 220,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      width: 220,
+                      height: 220,
+                      color: Colors.grey.shade200,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 220,
+                    height: 220,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.broken_image),
+                  ),
                 ),
               ),
             ),
+          ),
           const SizedBox(height: 4),
-          Text(
-            DateFormat.jm().format(message.sentAt),
-            style: GoogleFonts.outfit(
-              color: isMe
-                  ? Colors.white.withOpacity(0.7)
-                  : AppTheme.secondaryGray,
-              fontSize: 10,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (imageUrls.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isMe
+                          ? Colors.white.withOpacity(0.2)
+                          : Colors.black.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.collections,
+                          size: 12,
+                          color: isMe ? Colors.white : AppTheme.primaryBlack,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${imageUrls.length}',
+                          style: GoogleFonts.outfit(
+                            color: isMe ? Colors.white : AppTheme.primaryBlack,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Text(
+                DateFormat.jm().format(message.sentAt),
+                style: GoogleFonts.outfit(
+                  color: isMe
+                      ? Colors.white.withOpacity(0.7)
+                      : AppTheme.secondaryGray,
+                  fontSize: 10,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -796,5 +1176,95 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+}
+
+class ImageViewerScreen extends StatefulWidget {
+  final List<String> imageUrls;
+  final int initialIndex;
+
+  const ImageViewerScreen({
+    super.key,
+    required this.imageUrls,
+    required this.initialIndex,
+  });
+
+  @override
+  State<ImageViewerScreen> createState() => _ImageViewerScreenState();
+}
+
+class _ImageViewerScreenState extends State<ImageViewerScreen> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          '${_currentIndex + 1} / ${widget.imageUrls.length}',
+          style: GoogleFonts.outfit(color: Colors.white),
+        ),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.imageUrls.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4.0,
+            child: Center(
+              child: Hero(
+                tag: 'image_${widget.imageUrls[index]}',
+                child: Image.network(
+                  widget.imageUrls[index],
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                            : null,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(
+                      Icons.broken_image,
+                      color: Colors.white,
+                      size: 64,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
