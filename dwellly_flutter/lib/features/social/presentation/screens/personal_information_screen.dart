@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dwellly_client/room_rental_client.dart'; // Import User class
 import 'package:serverpod_auth_client/serverpod_auth_client.dart'; // Import UserInfo class
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/core/utils/avatar_utils.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/auth_providers.dart';
 import '../../../../features/auth/presentation/providers/user_providers.dart';
 
@@ -182,14 +183,14 @@ class _PersonalInformationScreenState
   }
 
   Widget _buildContent(UserInfo user) {
-    // Determine image URL: prefer server profile image, fallback to auth image, then placeholder
     final displayImageUrl =
         (_userProfile?.profileImage != null &&
             _userProfile!.profileImage!.isNotEmpty)
         ? _userProfile!.profileImage!
         : (user.imageUrl != null && user.imageUrl!.isNotEmpty)
         ? user.imageUrl!
-        : 'https://i.pravatar.cc/150?u=${user.userIdentifier}';
+        : null;
+    final displayName = _userProfile?.fullName ?? user.fullName ?? 'User';
     final accountType = _userProfile?.role.name.toUpperCase() ?? 'TENANT';
     final memberSince = _userProfile?.createdAt ?? user.created;
     final displayId =
@@ -212,12 +213,16 @@ class _PersonalInformationScreenState
                       width: 3,
                     ),
                   ),
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundImage: _pickedImage != null
-                        ? FileImage(File(_pickedImage!.path)) as ImageProvider
-                        : NetworkImage(displayImageUrl),
-                  ),
+                  child: _pickedImage != null
+                      ? CircleAvatar(
+                          radius: 60,
+                          backgroundImage: FileImage(File(_pickedImage!.path)),
+                        )
+                      : AvatarUtils.buildAvatar(
+                          imageUrl: displayImageUrl,
+                          fallbackName: displayName,
+                          radius: 60,
+                        ),
                 ),
                 if (_isEditing)
                   Positioned(

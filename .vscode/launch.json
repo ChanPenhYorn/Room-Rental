@@ -5,40 +5,40 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "room_rental",
+            "name": "dwellly",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "room_rental_client",
-            "cwd": "room_rental_client",
+            "name": "dwellly_client",
+            "cwd": "dwellly_client",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "room_rental_flutter",
-            "cwd": "room_rental_flutter",
+            "name": "dwellly_flutter",
+            "cwd": "dwellly_flutter",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart"
         },
         {
-            "name": "room_rental_flutter (profile mode)",
-            "cwd": "room_rental_flutter",
+            "name": "dwellly_flutter (profile mode)",
+            "cwd": "dwellly_flutter",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "room_rental_flutter (release mode)",
-            "cwd": "room_rental_flutter",
+            "name": "dwellly_flutter (release mode)",
+            "cwd": "dwellly_flutter",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
-            "name": "room_rental_server",
-            "cwd": "room_rental_server",
+            "name": "dwellly_server",
+            "cwd": "dwellly_server",
             "request": "launch",
             "type": "dart"
         }

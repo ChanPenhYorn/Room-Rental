@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/core/utils/avatar_utils.dart';
 import 'package:dwellly_flutter/features/auth/presentation/screens/login_screen.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/auth_providers.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/auth_state.dart';
@@ -273,7 +274,7 @@ class ProfileScreen extends ConsumerWidget {
             ? userProfile.profileImage!
             : (userInfo.imageUrl != null && userInfo.imageUrl!.isNotEmpty)
             ? userInfo.imageUrl!
-            : 'https://i.pravatar.cc/150?u=${userInfo.userIdentifier}';
+            : null;
 
         final roleName = userProfile?.role.name.toUpperCase() ?? 'TENANT';
 
@@ -305,9 +306,10 @@ class ProfileScreen extends ConsumerWidget {
                         width: 3,
                       ),
                     ),
-                    child: CircleAvatar(
+                    child: AvatarUtils.buildAvatar(
+                      imageUrl: displayImageUrl,
+                      fallbackName: displayName,
                       radius: 50,
-                      backgroundImage: NetworkImage(displayImageUrl),
                     ),
                   ),
                   Positioned(

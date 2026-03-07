@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/core/utils/avatar_utils.dart';
 import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
 import 'package:dwellly_flutter/features/social/presentation/screens/chat_detail_screen.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/user_providers.dart';
@@ -88,9 +89,7 @@ class ChatListScreen extends ConsumerWidget {
                 final message = conversations[index];
 
                 // Identify the contact
-                final isSenderMe =
-                    message.senderId == currentUserId ||
-                    (message.sender?.userInfoId == currentUserId);
+                final isSenderMe = message.senderId == currentUserId;
 
                 final contact = isSenderMe ? message.receiver : message.sender;
                 final contactId = isSenderMe
@@ -283,10 +282,7 @@ class ChatListScreen extends ConsumerWidget {
     int contactId,
   ) {
     final contactName = contact?.fullName ?? 'Unknown';
-    final avatarUrl =
-        (contact?.profileImage != null && contact!.profileImage!.isNotEmpty)
-        ? contact.profileImage!
-        : 'https://i.pravatar.cc/150?u=$contactId';
+    final avatarUrl = contact?.profileImage;
     final timeStr = _formatTime(message.sentAt);
 
     return InkWell(
@@ -309,10 +305,10 @@ class ChatListScreen extends ConsumerWidget {
           children: [
             Stack(
               children: [
-                CircleAvatar(
+                AvatarUtils.buildAvatar(
+                  imageUrl: avatarUrl,
+                  fallbackName: contactName,
                   radius: 28,
-                  backgroundImage: NetworkImage(avatarUrl),
-                  backgroundColor: AppTheme.dividerGray,
                 ),
                 if (contact?.isOnline ?? false)
                   Positioned(
@@ -387,7 +383,7 @@ class ChatListScreen extends ConsumerWidget {
   }
 
   Widget _buildMessagePreview(ChatMessage message, int contactId) {
-    final messageType = message.messageType ?? 'text';
+    final messageType = message.messageType;
     IconData? typeIcon;
     String prefix = '';
 

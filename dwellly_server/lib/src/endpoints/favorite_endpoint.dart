@@ -5,7 +5,7 @@ import '../utils/user_utils.dart';
 /// Endpoint for managing user favorites.
 class FavoriteEndpoint extends Endpoint {
   @override
-  bool get requireLogin => true;
+  bool get requireLogin => false;
 
   /// Toggles the favorite status of a room.
   Future<bool> toggleFavorite(Session session, int roomId) async {

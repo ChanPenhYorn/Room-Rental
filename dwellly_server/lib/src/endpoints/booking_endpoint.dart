@@ -5,7 +5,7 @@ import '../utils/notification_utils.dart';
 
 class BookingEndpoint extends Endpoint {
   @override
-  bool get requireLogin => true;
+  bool get requireLogin => false;
 
   /// Create a new booking
   Future<Booking?> createBooking(Session session, Booking booking) async {

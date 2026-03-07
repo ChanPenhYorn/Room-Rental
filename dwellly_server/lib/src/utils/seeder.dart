@@ -141,19 +141,15 @@ class DataSeeder {
     // Realistic Phnom Penh Locations based on Khmer24 data
     final locations = [
       {'name': 'Chbar Ampov, Phnom Penh', 'lat': 11.5218, 'lng': 104.9351},
-      {
-        'name': 'Tonle Basak, Chamkar Mon, Phnom Penh',
-        'lat': 11.5511,
-        'lng': 104.9318,
-      },
+      {'name': 'Tonle Basak, Chamkar Mon, Phnom Penh', 'lat': 11.5511, 'lng': 104.9318},
       {'name': 'Russey Keo, Phnom Penh', 'lat': 11.5947, 'lng': 104.8988},
       {'name': 'Boeng Keng Kang, Phnom Penh', 'lat': 11.5524, 'lng': 104.9242},
       {'name': 'Sen Sok, Phnom Penh', 'lat': 11.5833, 'lng': 104.8833},
-      {
-        'name': 'Toul Sangke, Russey Keo, Phnom Penh',
-        'lat': 11.6033,
-        'lng': 104.8978,
-      },
+      {'name': 'Toul Sangke, Russey Keo, Phnom Penh', 'lat': 11.6033, 'lng': 104.8978},
+      {'name': 'Toul Tom Poung, Phnom Penh', 'lat': 11.5388, 'lng': 104.9148},
+      {'name': 'Daun Penh, Phnom Penh', 'lat': 11.5667, 'lng': 104.9167},
+      {'name': 'Prampir Meakkara, Phnom Penh', 'lat': 11.5624, 'lng': 104.9114},
+      {'name': 'Dangkao, Phnom Penh', 'lat': 11.4833, 'lng': 104.8833},
     ];
 
     final roomData = [
@@ -161,43 +157,61 @@ class DataSeeder {
         'title': 'Large Room for rent at Chbar Ampov',
         'type': RoomType.apartment1br,
         'basePrice': 110,
-        'description':
-            'Large Room for rent at Chbar Ampov- បន្ទប់ជួលនៅច្បារអំពៅ. Located in a convenient area with good access to local markets and services.',
+        'description': 'Large Room for rent at Chbar Ampov- បន្ទប់ជួលនៅច្បារអំពៅ. Located in a convenient area with good access to local markets and services.',
       },
       {
         'title': 'Studio room for rent - Phnom Penh',
         'type': RoomType.studio,
         'basePrice': 550,
-        'description':
-            'Modern studio room for rent. Posted by Condo Apartment Service. Features high-quality furnishings and is situated in the heart of the city.',
+        'description': 'Modern studio room for rent. Posted by Condo Apartment Service. Features high-quality furnishings and is situated in the heart of the city.',
       },
       {
         'title': 'Ground floor room with mezzanine (បន្ទប់ជួលជាន់ផ្ទាល់ដី)',
         'type': RoomType.apartment1br,
         'basePrice': 120,
-        'description':
-            'Ground floor room featuring a mezzanine (meul). This unit is newly available and suitable for individuals or small families looking for an affordable living space.',
+        'description': 'Ground floor room featuring a mezzanine (meul). This unit is newly available and suitable for individuals or small families looking for an affordable living space.',
       },
       {
         'title': 'Cozy studio room for rent in Phnom Penh',
         'type': RoomType.studio,
         'basePrice': 450,
-        'description':
-            'A cozy and fully furnished studio room perfect for expatriates or professionals. Located in a safe and quiet neighborhood.',
+        'description': 'A cozy and fully furnished studio room perfect for expatriates or professionals. Located in a safe and quiet neighborhood.',
       },
       {
         'title': 'Room Near AEON 2 & TK Avenue',
         'type': RoomType.house,
         'basePrice': 150,
-        'description':
-            'Conveniently located room near AEON Mall 2 and TK Avenue. Easy access to shopping, dining, and entertainment venues.',
+        'description': 'Conveniently located room near AEON Mall 2 and TK Avenue. Easy access to shopping, dining, and entertainment venues.',
       },
       {
         'title': 'Rental Rooms - បន្ទប់ជួលក្នុងផ្សារ (Toul Sangke Camko)',
         'type': RoomType.dormitory,
         'basePrice': 65,
-        'description':
-            'Affordable rental rooms located directly within the Toul Sangke market area. Ideal for those working nearby who need budget-friendly accommodation.',
+        'description': 'Affordable rental rooms located directly within the Toul Sangke market area. Ideal for those working nearby who need budget-friendly accommodation.',
+      },
+      {
+        'title': 'Luxury Penthouse Suite',
+        'type': RoomType.apartment2br,
+        'basePrice': 1200,
+        'description': 'Experience the pinnacle of luxury in this high-floor penthouse. Stunning city views, private balcony, and top-tier amenities.',
+      },
+      {
+        'title': 'Modern 1BR Apartment in BKK1',
+        'type': RoomType.apartment1br,
+        'basePrice': 650,
+        'description': 'Beautifully designed 1-bedroom apartment in the heart of BKK1. Includes cleaning service, gym access, and 24/7 security.',
+      },
+      {
+        'title': 'Budget Friendly Room near RUPP',
+        'type': RoomType.dormitory,
+        'basePrice': 80,
+        'description': 'Perfect for students! Basic but clean room within walking distance to Royal University of Phnom Penh.',
+      },
+      {
+        'title': 'Family Home in Sen Sok',
+        'type': RoomType.house,
+        'basePrice': 350,
+        'description': 'Spacious house suitable for a family. Located in a quiet gated community (Borey) with parks and local shops nearby.',
       },
     ];
 

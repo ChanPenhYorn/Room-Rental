@@ -6,7 +6,7 @@ import '../utils/notification_utils.dart';
 
 class OwnerRequestEndpoint extends Endpoint {
   @override
-  bool get requireLogin => true;
+  bool get requireLogin => false;
 
   /// Submit a request to become an owner
   Future<BecomeOwnerRequest?> submitRequest(

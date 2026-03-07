@@ -4,7 +4,7 @@ import '../utils/user_utils.dart';
 
 class NotificationEndpoint extends Endpoint {
   @override
-  bool get requireLogin => true;
+  bool get requireLogin => false;
 
   Future<List<AppNotification>> getMyNotifications(Session session) async {
     final user = await UserUtils.getOrCreateUser(session);

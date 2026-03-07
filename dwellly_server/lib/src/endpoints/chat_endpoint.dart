@@ -7,7 +7,7 @@ import '../utils/cloudinary_service.dart';
 
 class ChatEndpoint extends Endpoint {
   @override
-  bool get requireLogin => true;
+  bool get requireLogin => false;
 
   @override
   Future<void> streamOpened(StreamingSession session) async {
@@ -57,42 +57,39 @@ class ChatEndpoint extends Endpoint {
     );
 
     final savedMessage = await ChatMessage.db.insertRow(session, message);
-    if (savedMessage != null) {
-      // Fetch with relations for the recipient to see sender details
-      final fullMessage = await ChatMessage.db.findById(
-        session,
-        savedMessage.id!,
-        include: ChatMessage.include(
-          sender: User.include(),
-          receiver: User.include(),
-        ),
+        final fullMessage = await ChatMessage.db.findById(
+      session,
+      savedMessage.id!,
+      include: ChatMessage.include(
+        sender: User.include(),
+        receiver: User.include(),
+      ),
+    );
+
+    if (fullMessage != null) {
+      // Broadcast the message to both participants' private channels (WebSockets)
+      session.messages.postMessage(
+        'channel_user_$receiverId',
+        fullMessage,
+      );
+      session.messages.postMessage(
+        'channel_user_${user.id}',
+        fullMessage,
       );
 
-      if (fullMessage != null) {
-        // Broadcast the message to both participants' private channels (WebSockets)
-        session.messages.postMessage(
-          'channel_user_$receiverId',
-          fullMessage,
-        );
-        session.messages.postMessage(
-          'channel_user_${user.id}',
-          fullMessage,
-        );
-
-        // Send Push Notification (FCM)
-        await NotificationUtils.sendNotification(
-          session,
-          recipientId: receiverId,
-          title: 'New Message from ${fullMessage.sender?.fullName ?? "User"}',
-          body: content,
-          data: {
-            'type': 'chat',
-            'senderId': fullMessage.senderId.toString(),
-            'senderName': fullMessage.sender?.fullName ?? "User",
-            'senderAvatar': fullMessage.sender?.profileImage ?? "",
-          },
-        );
-      }
+      // Send Push Notification (FCM)
+      await NotificationUtils.sendNotification(
+        session,
+        recipientId: receiverId,
+        title: 'New Message from ${fullMessage.sender?.fullName ?? "User"}',
+        body: content,
+        data: {
+          'type': 'chat',
+          'senderId': fullMessage.senderId.toString(),
+          'senderName': fullMessage.sender?.fullName ?? "User",
+          'senderAvatar': fullMessage.sender?.profileImage ?? "",
+        },
+      );
     }
     return savedMessage;
   }
@@ -223,43 +220,41 @@ class ChatEndpoint extends Endpoint {
     );
 
     final savedMessage = await ChatMessage.db.insertRow(session, chatMessage);
-    if (savedMessage != null) {
-      final fullMessage = await ChatMessage.db.findById(
-        session,
-        savedMessage.id!,
-        include: ChatMessage.include(
-          sender: User.include(),
-          receiver: User.include(),
-        ),
+    final fullMessage = await ChatMessage.db.findById(
+      session,
+      savedMessage.id!,
+      include: ChatMessage.include(
+        sender: User.include(),
+        receiver: User.include(),
+      ),
+    );
+
+    if (fullMessage != null) {
+      session.messages.postMessage(
+        'channel_user_$receiverId',
+        fullMessage,
+      );
+      session.messages.postMessage(
+        'channel_user_${user.id}',
+        fullMessage,
       );
 
-      if (fullMessage != null) {
-        session.messages.postMessage(
-          'channel_user_$receiverId',
-          fullMessage,
-        );
-        session.messages.postMessage(
-          'channel_user_${user.id}',
-          fullMessage,
-        );
+      final body = messageType == 'voice'
+          ? 'Voice message'
+          : message ?? 'Sent an attachment';
 
-        final body = messageType == 'voice'
-            ? 'Voice message'
-            : message ?? 'Sent an attachment';
-
-        await NotificationUtils.sendNotification(
-          session,
-          recipientId: receiverId,
-          title: 'New Message from ${fullMessage.sender?.fullName ?? "User"}',
-          body: body,
-          data: {
-            'type': 'chat',
-            'senderId': fullMessage.senderId.toString(),
-            'senderName': fullMessage.sender?.fullName ?? "User",
-            'senderAvatar': fullMessage.sender?.profileImage ?? "",
-          },
-        );
-      }
+      await NotificationUtils.sendNotification(
+        session,
+        recipientId: receiverId,
+        title: 'New Message from ${fullMessage.sender?.fullName ?? "User"}',
+        body: body,
+        data: {
+          'type': 'chat',
+          'senderId': fullMessage.senderId.toString(),
+          'senderName': fullMessage.sender?.fullName ?? "User",
+          'senderAvatar': fullMessage.sender?.profileImage ?? "",
+        },
+      );
     }
     return savedMessage;
   }

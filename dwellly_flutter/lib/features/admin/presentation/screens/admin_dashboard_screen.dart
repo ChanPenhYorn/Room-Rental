@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/core/utils/avatar_utils.dart';
 import 'package:dwellly_flutter/features/listings/presentation/providers/room_provider.dart';
 import 'package:dwellly_flutter/features/listings/domain/entities/room_entity.dart';
 import 'package:dwellly_flutter/features/owner_request/presentation/providers/owner_request_providers.dart';
@@ -1238,10 +1239,7 @@ class _UserManagementCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final displayUrl =
-        user.profileImage ??
-        user.userInfo?.imageUrl ??
-        'https://i.pravatar.cc/150?u=${user.id}';
+    final displayUrl = user.profileImage ?? user.userInfo?.imageUrl;
 
     final roleColor = user.role == UserRole.admin
         ? Colors.purple
@@ -1269,9 +1267,10 @@ class _UserManagementCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
+              AvatarUtils.buildAvatar(
+                imageUrl: displayUrl,
+                fallbackName: user.fullName,
                 radius: 24,
-                backgroundImage: NetworkImage(displayUrl),
               ),
               const SizedBox(width: 12),
               Expanded(

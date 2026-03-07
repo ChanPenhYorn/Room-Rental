@@ -437,9 +437,7 @@ class RoomDetailScreen extends ConsumerWidget {
                             builder: (_) => ChatDetailScreen(
                               userId: room.ownerId,
                               userName: room.ownerName ?? 'Property Host',
-                              avatarUrl:
-                                  room.ownerAvatarUrl ??
-                                  'https://i.pravatar.cc/150?u=${room.ownerId}',
+                              avatarUrl: room.ownerAvatarUrl,
                               isOnline: room.ownerIsOnline,
                             ),
                           ),

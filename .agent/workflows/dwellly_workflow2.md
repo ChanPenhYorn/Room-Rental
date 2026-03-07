@@ -49,18 +49,28 @@ Be conservative with tool usage — save tokens and time.
 - `serverpod` & `dwellly_flutter` folders cloned side-by-side
 - VS Code / Android Studio with Dart & Flutter extensions
 
-## Core Principle
-**Backend First – always.**
-1. Models & endpoints first
-2. Generate + migrate
-3. Sync Flutter client
-4. Then build Repository → Controller → UI
+## Core Principle: Planning + Implementation Split
+**AI Planning ⇨ User Approval ⇨ Opencode Implementation**
+1.  **AI Assistant**: Researches, plans, and creates `implementation_plan.md`.
+2.  **User**: Reviews and approves the plan.
+3.  **Opencode**: Executes the approved plan via `opencode run`.
+4.  **Verification**: AI or User verifies the changes.
 
-**Strict Rule – never broken:**  
-**Do NOT call Serverpod `client` from UI/widgets/screens.**  
-Flow must be: UI ⇨ Controller ⇨ Repository ⇨ client
+**Flow Rule:** 
+UI ⇨ Controller ⇨ Repository ⇨ client (Never break this).
 
-## 1. Backend-First: Models & Endpoints
+## Phase 1: Planning
+The Assistant should use the `SEARCHING` and `PLANNING` modes to gather information and draft a technical approach in `brain/<id>/implementation_plan.md`.
+
+## Phase 2: Implementation (via Opencode)
+Once the plan is approved, the Assistant MUST:
+1.  Generate an **Enhanced Opencode Command**.
+2.  Write this command to **[.ai/shared_promp.md](file:///Volumes/YCPSSD/Projects/flutter_dev/project/dwellly/.ai/shared_promp.md)**.
+3.  Notify the user that the command is ready.
+
+The User then executes the command via `opencode run`.
+
+## Phase 3: Backend-First Details
 1. **Models**  
    `dwellly_server/lib/src/models/*.yaml`  
    → Pure data only. No logic.

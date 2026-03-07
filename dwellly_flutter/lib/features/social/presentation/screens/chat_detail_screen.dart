@@ -4,10 +4,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/core/utils/avatar_utils.dart';
 import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/user_providers.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,18 +18,24 @@ import 'package:record/record.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final int userId;
   final String userName;
-  final String avatarUrl;
+  final String? avatarUrl;
   final bool isOnline;
 
   const ChatDetailScreen({
     super.key,
     required this.userId,
     required this.userName,
-    required this.avatarUrl,
+    this.avatarUrl,
     required this.isOnline,
   });
 
@@ -35,17 +43,28 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
+class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
+    with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _imagePicker = ImagePicker();
   final AudioRecorder _audioRecorder = AudioRecorder();
 
   bool _isRecording = false;
+  bool _isLocked = false;
   String? _recordingPath;
   DateTime? _recordingStartTime;
   Timer? _recordingTimer;
   int _recordingDuration = 0;
+
+  StreamSubscription? _amplitudeSubscription;
+  double _amplitude = 0.0;
+  AnimationController? _pulseController;
+
+  double _dragX = 0.0;
+  double _dragY = 0.0;
+  bool _isCancelled = false;
+  bool _isLocking = false;
 
   bool _isSending = false;
   String? _sendingType;
@@ -55,9 +74,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final Map<int, Duration> _playerPositions = {};
   final Map<int, Duration> _playerDurations = {};
 
+  final Map<int, bool> _fileDownloading = {};
+  final Dio _dio = Dio();
+
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
     Future.microtask(() {
       ref.read(chatHistoryProvider(widget.userId).notifier).markRead();
     });
@@ -68,6 +94,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     _audioRecorder.dispose();
+    _pulseController?.dispose();
+    _amplitudeSubscription?.cancel();
     for (final sub in _playerSubscriptions.values) {
       sub.cancel();
     }
@@ -105,47 +133,102 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: AppTheme.primaryGreen,
-                  child: Icon(Icons.photo_library, color: Colors.white),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                title: const Text('Photo Library'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickMultipleImages();
-                },
               ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: AppTheme.primaryGreen,
-                  child: Icon(Icons.camera_alt, color: Colors.white),
-                ),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildAttachmentOption(
+                    icon: Icons.photo_library,
+                    color: Colors.blue,
+                    label: 'Gallery',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickMultipleImages();
+                    },
+                  ),
+                  _buildAttachmentOption(
+                    icon: Icons.camera_alt,
+                    color: Colors.pink,
+                    label: 'Camera',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                  ),
+                  _buildAttachmentOption(
+                    icon: Icons.insert_drive_file,
+                    color: Colors.orange,
+                    label: 'File',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickFile();
+                    },
+                  ),
+                  _buildAttachmentOption(
+                    icon: Icons.location_on,
+                    color: Colors.green,
+                    label: 'Location',
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Location feature coming soon'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: AppTheme.primaryGreen,
-                  child: Icon(Icons.insert_drive_file, color: Colors.white),
-                ),
-                title: const Text('Document'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickFile();
-                },
-              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: AppTheme.primaryBlack,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -197,25 +280,20 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       );
 
       if (images.isNotEmpty) {
-        setState(() {
-          _isSending = true;
-          _sendingType = 'image';
-        });
-
-        for (final image in images) {
-          await _sendImageWithCompression(image.path);
-        }
-
-        setState(() {
-          _isSending = false;
-          _sendingType = null;
-        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MediaPreviewScreen(
+              filePath: images.first.path,
+              messageType: 'image',
+              userId: widget.userId,
+              isMultiple: true,
+              multiplePaths: images.map((e) => e.path).toList(),
+            ),
+          ),
+        );
       }
     } catch (e) {
-      setState(() {
-        _isSending = false;
-        _sendingType = null;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error picking images: $e')),
@@ -232,21 +310,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         maxWidth: 1200,
       );
       if (image != null) {
-        setState(() {
-          _isSending = true;
-          _sendingType = 'image';
-        });
-        await _sendImageWithCompression(image.path);
-        setState(() {
-          _isSending = false;
-          _sendingType = null;
-        });
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MediaPreviewScreen(
+              filePath: image.path,
+              messageType: 'image',
+              userId: widget.userId,
+            ),
+          ),
+        );
       }
     } catch (e) {
-      setState(() {
-        _isSending = false;
-        _sendingType = null;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error picking image: $e')),
@@ -297,21 +372,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx'],
       );
       if (result != null && result.files.single.path != null) {
-        setState(() {
-          _isSending = true;
-          _sendingType = 'file';
-        });
         await _sendAttachment(result.files.single.path!, 'file');
-        setState(() {
-          _isSending = false;
-          _sendingType = null;
-        });
       }
     } catch (e) {
-      setState(() {
-        _isSending = false;
-        _sendingType = null;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error picking file: $e')),
@@ -375,11 +438,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           path: path,
         );
 
+        _amplitudeSubscription = _audioRecorder
+            .onAmplitudeChanged(const Duration(milliseconds: 100))
+            .listen((amp) {
+              if (mounted) {
+                setState(() {
+                  _amplitude = amp.current;
+                });
+              }
+            });
+
+        HapticFeedback.mediumImpact();
+
         setState(() {
           _isRecording = true;
+          _isLocked = false;
           _recordingPath = path;
           _recordingStartTime = DateTime.now();
           _recordingDuration = 0;
+          _dragX = 0.0;
+          _dragY = 0.0;
+          _isCancelled = false;
+          _isLocking = false;
         });
 
         _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -397,14 +477,40 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
-  Future<void> _stopRecording() async {
+  Future<void> _stopRecording({
+    bool isCancelled = false,
+    bool fromLock = false,
+  }) async {
+    if (_isLocked && !fromLock) {
+      return;
+    }
+
     try {
       _recordingTimer?.cancel();
+      _amplitudeSubscription?.cancel();
       final path = await _audioRecorder.stop();
+
+      HapticFeedback.lightImpact();
 
       setState(() {
         _isRecording = false;
+        _isLocked = false;
+        _dragX = 0.0;
+        _dragY = 0.0;
+        _isCancelled = false;
+        _isLocking = false;
+        _amplitude = 0.0;
       });
+
+      if (isCancelled || path == null) {
+        if (path != null) {
+          final file = File(path);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        }
+        return;
+      }
 
       if (path != null) {
         setState(() {
@@ -420,8 +526,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     } catch (e) {
       setState(() {
         _isRecording = false;
+        _isLocked = false;
         _isSending = false;
         _sendingType = null;
+        _dragX = 0.0;
+        _dragY = 0.0;
+        _isCancelled = false;
+        _isLocking = false;
+        _amplitude = 0.0;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -431,11 +543,35 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
+  Future<void> _lockRecording() async {
+    HapticFeedback.heavyImpact();
+    setState(() {
+      _isLocked = true;
+      _isLocking = false;
+    });
+  }
+
+  Future<void> _cancelRecording() async {
+    HapticFeedback.mediumImpact();
+    await _stopRecording(isCancelled: true, fromLock: true);
+  }
+
+  Future<void> _sendRecording() async {
+    HapticFeedback.mediumImpact();
+    await _stopRecording(isCancelled: false, fromLock: true);
+  }
+
   Future<void> _toggleVoicePlayback(ChatMessage message) async {
     if (message.attachmentUrl == null) return;
 
     final messageId = message.id;
     if (messageId == null) return;
+
+    for (final entry in _audioPlayers.entries) {
+      if (entry.key != messageId && entry.value.playing) {
+        await entry.value.pause();
+      }
+    }
 
     if (_audioPlayers.containsKey(messageId)) {
       final player = _audioPlayers[messageId]!;
@@ -498,6 +634,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       orElse: () => null,
     );
 
+    ref.listen<AsyncValue<List<ChatMessage>>>(
+      chatHistoryProvider(widget.userId),
+      (previous, next) {
+        if (next.hasValue &&
+            (previous?.value?.length ?? 0) < (next.value?.length ?? 0)) {
+          _scrollToBottom();
+        }
+      },
+    );
+
     return Scaffold(
       backgroundColor: AppTheme.surfaceWhite,
       appBar: AppBar(
@@ -509,9 +655,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ),
         title: Row(
           children: [
-            CircleAvatar(
+            AvatarUtils.buildAvatar(
+              imageUrl: widget.avatarUrl,
+              fallbackName: widget.userName,
               radius: 16,
-              backgroundImage: NetworkImage(widget.avatarUrl),
             ),
             const SizedBox(width: 12),
             Column(
@@ -564,16 +711,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         ),
                       );
                     }
-                    _scrollToBottom();
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.all(16),
                       itemCount: messages.length,
                       itemBuilder: (context, index) {
                         final message = messages[index];
-                        final isMe =
-                            message.senderId == currentUserId ||
-                            (message.sender?.userInfoId == currentUserId);
+                        final isMe = message.senderId == currentUserId;
                         return _buildMessageBubble(message, isMe, messages);
                       },
                     );
@@ -587,6 +731,51 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           ),
           if (_isSending) _buildSendingOverlay(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonMessages() {
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 10,
+        itemBuilder: (context, index) {
+          final isMe = index % 2 == 0;
+          return Align(
+            alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.6,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: isMe
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 14,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 40,
+                    height: 10,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -677,35 +866,228 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   Widget _buildRecordingUI() {
+    if (_isLocked) {
+      return _buildLockedRecordingUI();
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
+        color: _isCancelled ? Colors.red.shade100 : Colors.red.shade50,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
-          const Icon(Icons.mic, color: Colors.red),
-          const SizedBox(width: 12),
-          Text(
-            'Recording... ${_formatDuration(_recordingDuration)}',
-            style: GoogleFonts.outfit(color: Colors.red),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _stopRecording,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                'Send',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+          AnimatedBuilder(
+            animation: _pulseController!,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: 1.0 + (_pulseController!.value * 0.2),
+                child: Icon(
+                  Icons.mic,
+                  color: _isCancelled ? Colors.white : Colors.red,
                 ),
+              );
+            },
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              onHorizontalDragUpdate: (details) {
+                setState(() {
+                  _dragX += details.delta.dx;
+                  if (_dragX < -50.0) {
+                    _isCancelled = true;
+                  } else {
+                    _isCancelled = false;
+                  }
+                });
+              },
+              onHorizontalDragEnd: (_) {
+                _stopRecording(isCancelled: _isCancelled);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              _buildAmplitudeWave(),
+                              const SizedBox(width: 8),
+                              Text(
+                                _isCancelled
+                                    ? 'Release to cancel'
+                                    : 'Recording...',
+                                style: GoogleFonts.outfit(
+                                  color: _isCancelled ? Colors.red : Colors.red,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            _formatDuration(_recordingDuration),
+                            style: GoogleFonts.outfit(
+                              color: _isCancelled
+                                  ? Colors.white
+                                  : Colors.red.shade400,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AnimatedOpacity(
+                      opacity: _isCancelled ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.delete_outline,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Cancelled',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmplitudeWave() {
+    final normalizedAmplitude = ((_amplitude + 160) / 160).clamp(0.0, 1.0);
+    return SizedBox(
+      width: 40,
+      height: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(5, (index) {
+          final heightFactor = (normalizedAmplitude * (index + 1) / 5).clamp(
+            0.2,
+            1.0,
+          );
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            width: 3,
+            height: 16 * heightFactor,
+            decoration: BoxDecoration(
+              color: _isCancelled ? Colors.white : Colors.red,
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildLockedRecordingUI() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryGreen.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          AnimatedBuilder(
+            animation: _pulseController!,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: 1.0 + (_pulseController!.value * 0.2),
+                child: const Icon(
+                  Icons.mic,
+                  color: AppTheme.primaryGreen,
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    _buildAmplitudeWave(),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Recording locked',
+                      style: GoogleFonts.outfit(
+                        color: AppTheme.primaryGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  _formatDuration(_recordingDuration),
+                  style: GoogleFonts.outfit(
+                    color: AppTheme.primaryGreen,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: _cancelRecording,
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.delete_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: _sendRecording,
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.send,
+                color: Colors.white,
+                size: 20,
               ),
             ),
           ),
@@ -745,9 +1127,35 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         const SizedBox(width: 8),
         GestureDetector(
           onLongPressStart: (_) => _startRecording(),
-          onLongPressEnd: (_) => _stopRecording(),
+          onLongPressMoveUpdate: (details) {
+            final dx = details.localPosition.dx - 40;
+            final dy = details.localPosition.dy - 40;
+            setState(() {
+              _dragX = dx;
+              _dragY = dy;
+              if (_dragX < -50.0) {
+                _isCancelled = true;
+                _isLocking = false;
+              } else if (_dragY < -50.0) {
+                _isLocking = true;
+                _isCancelled = false;
+              } else {
+                _isCancelled = false;
+                _isLocking = false;
+              }
+            });
+          },
+          onLongPressEnd: (_) {
+            if (_isLocked || _isLocking) {
+              _lockRecording();
+            } else {
+              _stopRecording(isCancelled: _isCancelled);
+            }
+          },
           child: CircleAvatar(
-            backgroundColor: AppTheme.primaryGreen,
+            backgroundColor: _isCancelled
+                ? Colors.red
+                : (_isLocking ? Colors.orange : AppTheme.primaryGreen),
             child: IconButton(
               icon: const Icon(Icons.mic, color: Colors.white, size: 20),
               onPressed: () {
@@ -947,6 +1355,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   ],
                 ),
               ),
+              if (message.message != null && message.message!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isMe
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    message.message!,
+                    style: GoogleFonts.outfit(
+                      color: isMe ? Colors.white : AppTheme.primaryBlack,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 4),
               Text(
                 position != null
@@ -992,9 +1422,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           msg.attachmentUrl != null &&
           msg.attachmentUrl!.isNotEmpty &&
           !imageUrls.contains(msg.attachmentUrl)) {
-        final msgIsMe =
-            msg.senderId == message.senderId ||
-            (msg.sender?.userInfoId == message.sender?.userInfoId);
+        final msgIsMe = msg.senderId == message.senderId;
         if (msgIsMe == isMe) {
           imageUrls.add(msg.attachmentUrl!);
         }
@@ -1105,63 +1533,150 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   Widget _buildFileMessage(ChatMessage message, bool isMe) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isMe
-                  ? Colors.white.withOpacity(0.2)
-                  : AppTheme.primaryGreen.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+    final messageId = message.id;
+    final isDownloading =
+        messageId != null && (_fileDownloading[messageId] ?? false);
+
+    return GestureDetector(
+      onTap: () async {
+        if (message.attachmentUrl == null || messageId == null) return;
+
+        if (_fileDownloading[messageId] == true) return;
+
+        try {
+          final directory = await getApplicationDocumentsDirectory();
+          final fileName = message.attachmentName ?? 'document';
+          final localPath = '${directory.path}/$fileName';
+          final localFile = File(localPath);
+
+          if (await localFile.exists()) {
+            await OpenFilex.open(localPath);
+          } else {
+            setState(() {
+              _fileDownloading[messageId] = true;
+            });
+
+            await _dio.download(
+              message.attachmentUrl!,
+              localPath,
+              onReceiveProgress: (received, total) {},
+            );
+
+            setState(() {
+              _fileDownloading[messageId] = false;
+            });
+
+            if (await localFile.exists()) {
+              await OpenFilex.open(localPath);
+            }
+          }
+        } catch (e) {
+          setState(() {
+            _fileDownloading[messageId] = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error opening file: $e')),
+            );
+          }
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isMe
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : AppTheme.primaryGreen.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.insert_drive_file,
+                color: isMe ? Colors.white : AppTheme.primaryGreen,
+              ),
             ),
-            child: Icon(
-              Icons.insert_drive_file,
-              color: isMe ? Colors.white : AppTheme.primaryGreen,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message.attachmentName ?? 'Document',
-                  style: GoogleFonts.outfit(
-                    color: isMe ? Colors.white : AppTheme.primaryBlack,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (message.attachmentSize != null)
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    _formatFileSize(message.attachmentSize!),
+                    message.attachmentName ?? 'Document',
+                    style: GoogleFonts.outfit(
+                      color: isMe ? Colors.white : AppTheme.primaryBlack,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (message.attachmentSize != null)
+                    Text(
+                      _formatFileSize(message.attachmentSize!),
+                      style: GoogleFonts.outfit(
+                        color: isMe
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : AppTheme.secondaryGray,
+                        fontSize: 12,
+                      ),
+                    ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isDownloading ? 'Downloading...' : 'Tap to open',
                     style: GoogleFonts.outfit(
                       color: isMe
-                          ? Colors.white.withOpacity(0.7)
-                          : AppTheme.secondaryGray,
-                      fontSize: 12,
+                          ? Colors.white.withValues(alpha: 0.5)
+                          : AppTheme.secondaryGray.withValues(alpha: 0.7),
+                      fontSize: 10,
                     ),
                   ),
-              ],
+                  if (message.message != null &&
+                      message.message!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      message.message!,
+                      style: GoogleFonts.outfit(
+                        color: isMe ? Colors.white : AppTheme.primaryBlack,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            DateFormat.jm().format(message.sentAt),
-            style: GoogleFonts.outfit(
-              color: isMe
-                  ? Colors.white.withOpacity(0.7)
-                  : AppTheme.secondaryGray,
-              fontSize: 10,
+            const SizedBox(width: 8),
+            isDownloading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                    ),
+                  )
+                : Icon(
+                    Icons.open_in_new,
+                    size: 16,
+                    color: isMe
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : AppTheme.secondaryGray,
+                  ),
+            const SizedBox(width: 8),
+            Text(
+              DateFormat.jm().format(message.sentAt),
+              style: GoogleFonts.outfit(
+                color: isMe
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : AppTheme.secondaryGray,
+                fontSize: 10,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1196,6 +1711,67 @@ class ImageViewerScreen extends StatefulWidget {
 class _ImageViewerScreenState extends State<ImageViewerScreen> {
   late PageController _pageController;
   late int _currentIndex;
+  bool _isSaving = false;
+  final Dio _dio = Dio();
+
+  Future<void> _saveToGallery() async {
+    if (_isSaving) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final status = await Permission.photos.request();
+
+      if (status.isGranted || status.isLimited) {
+        final response = await _dio.get<List<int>>(
+          widget.imageUrls[_currentIndex],
+          options: Options(responseType: ResponseType.bytes),
+        );
+
+        if (response.data != null) {
+          final result = await ImageGallerySaverPlus.saveImage(
+            Uint8List.fromList(response.data!),
+            quality: 100,
+            name: 'dwellly_image_${DateTime.now().millisecondsSinceEpoch}',
+          );
+
+          if (mounted) {
+            if (result['isSuccess'] == true) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Saved to gallery')),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to save: ${result['errorMessage']}'),
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Storage permission required')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving image: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -1213,6 +1789,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
@@ -1221,6 +1798,21 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
           '${_currentIndex + 1} / ${widget.imageUrls.length}',
           style: GoogleFonts.outfit(color: Colors.white),
         ),
+        actions: [
+          IconButton(
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.save_alt),
+            onPressed: _isSaving ? null : _saveToGallery,
+          ),
+        ],
       ),
       body: PageView.builder(
         controller: _pageController,
@@ -1264,6 +1856,272 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class MediaPreviewScreen extends ConsumerStatefulWidget {
+  final String filePath;
+  final String messageType;
+  final bool isMultiple;
+  final List<String>? multiplePaths;
+  final int userId;
+
+  const MediaPreviewScreen({
+    super.key,
+    required this.filePath,
+    required this.messageType,
+    required this.userId,
+    this.isMultiple = false,
+    this.multiplePaths,
+  });
+
+  @override
+  ConsumerState<MediaPreviewScreen> createState() => _MediaPreviewScreenState();
+}
+
+class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
+  final TextEditingController _captionController = TextEditingController();
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendMessage() async {
+    if (_isSending) return;
+
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      final controller = ref.read(chatHistoryProvider(widget.userId).notifier);
+
+      if (widget.messageType == 'image') {
+        if (widget.isMultiple && widget.multiplePaths != null) {
+          for (final path in widget.multiplePaths!) {
+            final compressedBytes = await _compressImage(File(path));
+            if (compressedBytes != null) {
+              final base64String = base64Encode(compressedBytes);
+              final fileName = path.split('/').last;
+              final attachmentUrl = await controller.uploadAttachment(
+                base64String,
+                fileName,
+              );
+              if (attachmentUrl != null) {
+                await controller.sendAttachmentMessage(
+                  messageType: 'image',
+                  attachmentUrl: attachmentUrl,
+                  attachmentSize: compressedBytes.length,
+                  message: _captionController.text.trim().isNotEmpty
+                      ? _captionController.text.trim()
+                      : null,
+                );
+              }
+            }
+          }
+        } else {
+          final compressedBytes = await _compressImage(File(widget.filePath));
+          if (compressedBytes != null) {
+            final base64String = base64Encode(compressedBytes);
+            final fileName = widget.filePath.split('/').last;
+            final attachmentUrl = await controller.uploadAttachment(
+              base64String,
+              fileName,
+            );
+            if (attachmentUrl != null) {
+              await controller.sendAttachmentMessage(
+                messageType: 'image',
+                attachmentUrl: attachmentUrl,
+                attachmentSize: compressedBytes.length,
+                message: _captionController.text.trim().isNotEmpty
+                    ? _captionController.text.trim()
+                    : null,
+              );
+            }
+          }
+        }
+      } else if (widget.messageType == 'file') {
+        final file = File(widget.filePath);
+        final bytes = await file.readAsBytes();
+        final base64String = base64Encode(bytes);
+        final fileName = widget.filePath.split('/').last;
+        final attachmentUrl = await controller.uploadAttachment(
+          base64String,
+          fileName,
+        );
+        if (attachmentUrl != null) {
+          await controller.sendAttachmentMessage(
+            messageType: 'file',
+            attachmentUrl: attachmentUrl,
+            attachmentSize: bytes.length,
+            attachmentName: fileName,
+            message: _captionController.text.trim().isNotEmpty
+                ? _captionController.text.trim()
+                : null,
+          );
+        }
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sending message: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  Future<Uint8List?> _compressImage(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final decodedImage = await decodeImageFromList(bytes);
+      int width = decodedImage.width;
+      int height = decodedImage.height;
+      const maxWidth = 1200;
+      if (width > maxWidth) {
+        height = (height * maxWidth / width).round();
+        width = maxWidth;
+      }
+      return bytes;
+    } catch (e) {
+      return await file.readAsBytes();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.messageType == 'image' ? 'Photo' : 'File',
+          style: GoogleFonts.outfit(color: Colors.white),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Center(
+            child: widget.messageType == 'image'
+                ? Image.file(
+                    File(widget.filePath),
+                    fit: BoxFit.contain,
+                  )
+                : Container(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.insert_drive_file,
+                            color: AppTheme.primaryGreen,
+                            size: 64,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          widget.filePath.split('/').last,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.8),
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: TextField(
+                          controller: _captionController,
+                          style: GoogleFonts.outfit(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Add a caption...',
+                            hintStyle: GoogleFonts.outfit(
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: _isSending ? null : _sendMessage,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _isSending
+                              ? Colors.grey
+                              : AppTheme.primaryGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: _isSending
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.send,
+                                color: Colors.white,
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

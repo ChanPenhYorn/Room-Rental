@@ -1,4 +1,6 @@
 # Dwellly App - Quick Start Guide
+> [!TIP]
+> **New Workflow**: Check out [IMPLEMENTATION_GUIDE.md](file:///Volumes/YCPSSD/Projects/flutter_dev/project/dwellly/IMPLEMENTATION_GUIDE.md) to learn how to use AI for automated feature implementation.
 
 ## 🚀 Getting Started
 

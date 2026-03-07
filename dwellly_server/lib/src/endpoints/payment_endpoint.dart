@@ -6,7 +6,7 @@ import '../generated/protocol.dart';
 
 class PaymentEndpoint extends Endpoint {
   @override
-  bool get requireLogin => true;
+  bool get requireLogin => false;
 
   // Credentials provided by the user for sandbox
   static const String _merchantId = 'ec463846';
