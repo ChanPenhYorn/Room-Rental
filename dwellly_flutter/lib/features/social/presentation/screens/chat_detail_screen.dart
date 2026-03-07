@@ -7,10 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/core/utils/avatar_utils.dart';
 import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
+import 'package:dwellly_flutter/features/social/presentation/screens/location_picker_screen.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/user_providers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -24,6 +28,8 @@ import 'package:dio/dio.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:any_link_preview/any_link_preview.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -79,6 +85,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
   String? _currentFloatingDate;
   bool _showFloatingPill = false;
+  bool _showScrollDownButton = false;
   Timer? _hidePillTimer;
 
   @override
@@ -188,11 +195,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                     label: 'Location',
                     onTap: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Location feature coming soon'),
-                        ),
-                      );
+                      _pickLocation();
                     },
                   ),
                 ],
@@ -366,6 +369,65 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error sending image: $e')),
         );
+      }
+    }
+  }
+
+  Future<void> _pickLocation() async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationPickerScreen(userId: widget.userId),
+      ),
+    );
+
+    if (result != null && mounted) {
+      await _sendLocation(
+        result['latitude'] as double,
+        result['longitude'] as double,
+        result['address'] as String,
+      );
+    }
+  }
+
+  Future<void> _sendLocation(
+    double latitude,
+    double longitude,
+    String address,
+  ) async {
+    try {
+      setState(() {
+        _isSending = true;
+        _sendingType = 'location';
+      });
+
+      final controller = ref.read(chatHistoryProvider(widget.userId).notifier);
+
+      final locationData = jsonEncode({
+        'latitude': latitude,
+        'longitude': longitude,
+        'address': address,
+      });
+
+      await controller.sendAttachmentMessage(
+        messageType: 'location',
+        attachmentUrl: locationData,
+        message: address,
+      );
+
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sending location: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _sendingType = null;
+        });
       }
     }
   }
@@ -727,14 +789,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                       } else {
                         final previousMessage = messages[i - 1];
                         final currentDate = DateTime(
-                          message.sentAt.year,
-                          message.sentAt.month,
-                          message.sentAt.day,
+                          message.sentAt.toLocal().year,
+                          message.sentAt.toLocal().month,
+                          message.sentAt.toLocal().day,
                         );
                         final previousDate = DateTime(
-                          previousMessage.sentAt.year,
-                          previousMessage.sentAt.month,
-                          previousMessage.sentAt.day,
+                          previousMessage.sentAt.toLocal().year,
+                          previousMessage.sentAt.toLocal().month,
+                          previousMessage.sentAt.toLocal().day,
                         );
                         if (currentDate != previousDate) {
                           itemsWithHeaders.add(
@@ -747,6 +809,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
                     return NotificationListener<ScrollNotification>(
                       onNotification: (notification) {
+                        final double extentAfter =
+                            notification.metrics.extentAfter;
+
+                        if (extentAfter > 100) {
+                          if (!_showScrollDownButton) {
+                            setState(() => _showScrollDownButton = true);
+                          }
+                        } else if (extentAfter <= 0) {
+                          if (_showScrollDownButton) {
+                            setState(() => _showScrollDownButton = false);
+                          }
+                        }
+
                         if (notification is ScrollStartNotification ||
                             notification is ScrollUpdateNotification) {
                           setState(() {
@@ -837,6 +912,20 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
               ),
             ),
           ),
+          if (_showScrollDownButton)
+            Positioned(
+              right: 16,
+              bottom: 100,
+              child: FloatingActionButton(
+                mini: true,
+                backgroundColor: Colors.white,
+                onPressed: _scrollToBottom,
+                child: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+            ),
           if (_isSending) _buildSendingOverlay(),
         ],
       ),
@@ -908,6 +997,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         bgColor = Colors.blue.shade400;
         message = 'Sending file...';
         icon = Icons.insert_drive_file;
+        break;
+      case 'location':
+        bgColor = Colors.green.shade400;
+        message = 'Sending location...';
+        icon = Icons.location_on;
         break;
       default:
         bgColor = Colors.grey;
@@ -1334,12 +1428,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         return _buildImageMessage(message, isMe, allMessages);
       case 'file':
         return _buildFileMessage(message, isMe);
+      case 'location':
+        return _buildLocationMessage(message, isMe);
       default:
         return _buildTextMessage(message, isMe);
     }
   }
 
   Widget _buildTextMessage(ChatMessage message, bool isMe) {
+    final urlRegex = RegExp(r'https?://[^\s]+');
+    final firstUrlMatch = urlRegex.firstMatch(message.message ?? '');
+    String? firstUrl;
+    if (firstUrlMatch != null) {
+      firstUrl = firstUrlMatch.group(0);
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
@@ -1347,16 +1450,49 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
-          Text(
-            message.message,
+          SelectableLinkify(
+            text: message.message ?? '',
             style: GoogleFonts.outfit(
               color: isMe ? Colors.white : AppTheme.primaryBlack,
               fontSize: 15,
             ),
+            linkStyle: TextStyle(
+              color: isMe ? Colors.lightBlue[200] : Colors.blue,
+              decoration: TextDecoration.underline,
+            ),
+            onOpen: (link) async {
+              final url = Uri.parse(link.url);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
           ),
+          if (firstUrl != null && !isMe) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 250,
+              child: AnyLinkPreview(
+                link: firstUrl,
+                displayDirection: UIDirection.uiDirectionHorizontal,
+                backgroundColor: Colors.grey[100],
+                borderRadius: 8,
+                placeholderWidget: Container(
+                  height: 100,
+                  color: Colors.grey[200],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.primaryGreen,
+                    ),
+                  ),
+                ),
+                errorWidget: const SizedBox.shrink(),
+              ),
+            ),
+          ],
           const SizedBox(height: 4),
           Text(
-            DateFormat.jm().format(message.sentAt),
+            DateFormat.jm().format(message.sentAt.toLocal()),
             style: GoogleFonts.outfit(
               color: isMe
                   ? Colors.white.withOpacity(0.7)
@@ -1501,7 +1637,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
           ),
           const SizedBox(width: 12),
           Text(
-            DateFormat.jm().format(message.sentAt),
+            DateFormat.jm().format(message.sentAt.toLocal()),
             style: GoogleFonts.outfit(
               color: isMe
                   ? Colors.white.withOpacity(0.7)
@@ -1625,7 +1761,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                   ),
                 ),
               Text(
-                DateFormat.jm().format(message.sentAt),
+                DateFormat.jm().format(message.sentAt.toLocal()),
                 style: GoogleFonts.outfit(
                   color: isMe
                       ? Colors.white.withOpacity(0.7)
@@ -1775,7 +1911,123 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                   ),
             const SizedBox(width: 8),
             Text(
-              DateFormat.jm().format(message.sentAt),
+              DateFormat.jm().format(message.sentAt.toLocal()),
+              style: GoogleFonts.outfit(
+                color: isMe
+                    ? Colors.white.withValues(alpha: 0.7)
+                    : AppTheme.secondaryGray,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationMessage(ChatMessage message, bool isMe) {
+    double? latitude;
+    double? longitude;
+    String address = message.message ?? 'Location';
+
+    if (message.attachmentUrl != null) {
+      try {
+        final locationData = jsonDecode(message.attachmentUrl!);
+        latitude = locationData['latitude'] as double?;
+        longitude = locationData['longitude'] as double?;
+        if (locationData['address'] != null) {
+          address = locationData['address'] as String;
+        }
+      } catch (e) {
+        // Use default values
+      }
+    }
+
+    final staticMapUrl = (latitude != null && longitude != null)
+        ? 'https://maps.googleapis.com/maps/api/staticmap?center=$latitude,$longitude&zoom=15&size=300x200&markers=color:red%7C$latitude,$longitude&key=AIzaSyANXGSeMYEnzqddpWnE2tWXCnuvf3aiPtA'
+        : null;
+
+    return GestureDetector(
+      onTap: () async {
+        if (latitude != null && longitude != null) {
+          final url = Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+          );
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          }
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            if (staticMapUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  staticMapUrl,
+                  width: 250,
+                  height: 150,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    print(
+                      'DEBUG: [StaticMap] Static Map image failed to load for coordinates: $latitude, $longitude',
+                    );
+                    return Container(
+                      width: 250,
+                      height: 150,
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.map, size: 48),
+                    );
+                  },
+                ),
+              )
+            else
+              Container(
+                width: 250,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: isMe
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : AppTheme.primaryGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.location_on,
+                  size: 48,
+                  color: isMe ? Colors.white : AppTheme.primaryGreen,
+                ),
+              ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.location_on,
+                  size: 14,
+                  color: isMe ? Colors.white : AppTheme.primaryGreen,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    address,
+                    style: GoogleFonts.outfit(
+                      color: isMe ? Colors.white : AppTheme.primaryBlack,
+                      fontSize: 13,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat.jm().format(message.sentAt.toLocal()),
               style: GoogleFonts.outfit(
                 color: isMe
                     ? Colors.white.withValues(alpha: 0.7)
@@ -1802,19 +2054,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   }
 
   String _getDateHeaderText(DateTime date) {
-    final now = DateTime.now();
+    final now = DateTime.now().toLocal();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final messageDate = DateTime(date.year, date.month, date.day);
+    final messageDate = DateTime(
+      date.toLocal().year,
+      date.toLocal().month,
+      date.toLocal().day,
+    );
 
     if (messageDate == today) {
       return 'Today';
     } else if (messageDate == yesterday) {
       return 'Yesterday';
-    } else if (date.year == now.year) {
-      return DateFormat('EEEE, MMMM d').format(date);
+    } else if (date.toLocal().year == now.year) {
+      return DateFormat('EEEE, MMMM d').format(date.toLocal());
     } else {
-      return DateFormat('MMMM d, yyyy').format(date);
+      return DateFormat('MMMM d, yyyy').format(date.toLocal());
     }
   }
 
