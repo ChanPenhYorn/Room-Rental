@@ -77,6 +77,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   final Map<int, bool> _fileDownloading = {};
   final Dio _dio = Dio();
 
+  String? _currentFloatingDate;
+  bool _showFloatingPill = false;
+  Timer? _hidePillTimer;
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +100,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _audioRecorder.dispose();
     _pulseController?.dispose();
     _amplitudeSubscription?.cancel();
+    _hidePillTimer?.cancel();
     for (final sub in _playerSubscriptions.values) {
       sub.cancel();
     }
@@ -711,15 +716,89 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                         ),
                       );
                     }
-                    return ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        final message = messages[index];
-                        final isMe = message.senderId == currentUserId;
-                        return _buildMessageBubble(message, isMe, messages);
+
+                    final itemsWithHeaders = <dynamic>[];
+                    for (int i = 0; i < messages.length; i++) {
+                      final message = messages[i];
+                      if (i == 0) {
+                        itemsWithHeaders.add(
+                          _getDateHeaderText(message.sentAt),
+                        );
+                      } else {
+                        final previousMessage = messages[i - 1];
+                        final currentDate = DateTime(
+                          message.sentAt.year,
+                          message.sentAt.month,
+                          message.sentAt.day,
+                        );
+                        final previousDate = DateTime(
+                          previousMessage.sentAt.year,
+                          previousMessage.sentAt.month,
+                          previousMessage.sentAt.day,
+                        );
+                        if (currentDate != previousDate) {
+                          itemsWithHeaders.add(
+                            _getDateHeaderText(message.sentAt),
+                          );
+                        }
+                      }
+                      itemsWithHeaders.add(message);
+                    }
+
+                    return NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        if (notification is ScrollStartNotification ||
+                            notification is ScrollUpdateNotification) {
+                          setState(() {
+                            _showFloatingPill = true;
+                          });
+                          _hidePillTimer?.cancel();
+
+                          final index = (_scrollController.offset / 100)
+                              .floor()
+                              .clamp(0, itemsWithHeaders.length - 1);
+
+                          String? foundDate;
+                          for (int i = index; i >= 0; i--) {
+                            if (itemsWithHeaders[i] is String) {
+                              foundDate = itemsWithHeaders[i] as String;
+                              break;
+                            }
+                          }
+
+                          setState(() {
+                            _currentFloatingDate = foundDate;
+                          });
+                        } else if (notification is ScrollEndNotification) {
+                          _hidePillTimer?.cancel();
+                          _hidePillTimer = Timer(
+                            const Duration(milliseconds: 1500),
+                            () {
+                              if (mounted) {
+                                setState(() {
+                                  _showFloatingPill = false;
+                                });
+                              }
+                            },
+                          );
+                        }
+                        return false;
                       },
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: itemsWithHeaders.length,
+                        itemBuilder: (context, index) {
+                          final item = itemsWithHeaders[index];
+                          if (item is String) {
+                            return _buildDateHeader(item);
+                          } else if (item is ChatMessage) {
+                            final isMe = item.senderId == currentUserId;
+                            return _buildMessageBubble(item, isMe, messages);
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                     );
                   },
                   loading: () => _buildSkeletonMessages(),
@@ -728,6 +807,35 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
               ),
               _buildMessageInput(),
             ],
+          ),
+          Positioned(
+            top: 10,
+            left: 0,
+            right: 0,
+            child: AnimatedOpacity(
+              opacity: _showFloatingPill ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _currentFloatingDate ?? '',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
           if (_isSending) _buildSendingOverlay(),
         ],
@@ -1691,6 +1799,43 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  String _getDateHeaderText(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) {
+      return 'Today';
+    } else if (messageDate == yesterday) {
+      return 'Yesterday';
+    } else if (date.year == now.year) {
+      return DateFormat('EEEE, MMMM d').format(date);
+    } else {
+      return DateFormat('MMMM d, yyyy').format(date);
+    }
+  }
+
+  Widget _buildDateHeader(String text) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      // decoration: BoxDecoration(
+      //   color: Colors.black.withValues(alpha: 0.05),
+      //   borderRadius: BorderRadius.circular(16),
+      // ),
+      child: Text(
+        text,
+        style: GoogleFonts.outfit(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.secondaryGray,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
   }
 }
 
