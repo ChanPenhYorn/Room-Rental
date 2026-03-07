@@ -31,6 +31,8 @@ dependencies:
     sdk: flutter
   dwellly_client:
     path: ../dwellly_client
+  dwellly_chat:
+    path: ../packages/dwellly_chat
   serverpod_auth_idp_flutter: 3.3.0
   serverpod_flutter: 3.3.0
 

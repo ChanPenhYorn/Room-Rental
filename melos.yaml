@@ -1,0 +1,39 @@
+name: dwellly
+repository: https://github.com/ChanPenhYorn/Room-Rental
+
+packages:
+  - dwellly_client
+  - dwellly_server
+  - dwellly_flutter
+  - packages/*
+
+command:
+  bootstrap:
+    # It seems so that the bootstrap script can run `pub get` in all packages.
+    runPubGetInParallel: true
+    usePubspecOverrides: true
+
+scripts:
+  gen:
+    name: "Serverpod Generate"
+    description: "Generate Serverpod code"
+    run: |
+      cd dwellly_server && serverpod generate
+    exec:
+      concurrency: 1
+
+  migrate:
+    name: "Serverpod Migrate"
+    description: "Create and apply migrations"
+    run: |
+      cd dwellly_server && serverpod create-migration && dart bin/main.dart --apply-migrations
+
+  analyze:
+    name: "Analyze"
+    description: "Analyze all packages"
+    run: melos exec -c 1 -- "flutter analyze . "
+
+  test:
+    name: "Test"
+    description: "Run tests in all packages"
+    run: melos exec -c 1 -- "flutter test"

@@ -1,0 +1,31 @@
+name: dwellly_chat
+description: Modular Chat Feature for Dwellly
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: "^3.8.0"
+  flutter: "^3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dwellly_client:
+    path: ../../dwellly_client
+  dwellly_flutter:
+    path: ../../dwellly_flutter
+  flutter_riverpod: ^2.5.1
+  google_fonts: ^6.2.1
+  google_maps_flutter: ^2.15.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  skeletonizer: ^2.1.0
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ">=3.0.0 <7.0.0"
+
+flutter:
+  uses-material-design: true
