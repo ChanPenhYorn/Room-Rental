@@ -19,6 +19,10 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
+  /// Static variable to track the currently active chat user ID.
+  /// Used to suppress notifications when the user is already in the relevant chat.
+  static int? activeChatUserId;
+
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'high_importance_channel',
     'High Importance Notifications',
@@ -111,6 +115,16 @@ class NotificationService {
     AndroidNotification? android = message.notification?.android;
 
     if (notification != null) {
+      final type = message.data['type'];
+      if (type == 'chat') {
+        final senderId = int.tryParse(message.data['senderId'] ?? '0') ?? 0;
+        if (senderId != 0 && senderId == activeChatUserId) {
+          print(
+            '🔔 [FCM] Suppressing foreground alert for active chat with user $senderId',
+          );
+          return;
+        }
+      }
       final payload = jsonEncode({
         'title': notification.title,
         'body': notification.body,
@@ -188,6 +202,14 @@ class NotificationService {
         final senderAvatar = message.data['senderAvatar'] ?? '';
 
         if (senderId != 0) {
+          // If already in this chat, don't push again
+          if (senderId == activeChatUserId) {
+            print(
+              '🔔 [FCM] Already in chat with user $senderId, skipping push',
+            );
+            return;
+          }
+
           navigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (_) => ChatDetailScreen(

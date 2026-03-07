@@ -20,20 +20,23 @@ class NotificationUtils {
     required String title,
     required String body,
     Map<String, String>? data,
+    bool persist = true,
   }) async {
     try {
       // 1. Persist notification in database
-      await AppNotification.db.insertRow(
-        session,
-        AppNotification(
-          userId: recipientId,
-          title: title,
-          body: body,
-          data: data,
-          isRead: false,
-          createdAt: DateTime.now(),
-        ),
-      );
+      if (persist) {
+        await AppNotification.db.insertRow(
+          session,
+          AppNotification(
+            userId: recipientId,
+            title: title,
+            body: body,
+            data: data,
+            isRead: false,
+            createdAt: DateTime.now(),
+          ),
+        );
+      }
 
       // 2. Send push notification
       final recipient = await User.db.findById(session, recipientId);

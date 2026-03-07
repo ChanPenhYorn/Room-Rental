@@ -14,6 +14,7 @@ import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
 import 'package:dwellly_flutter/core/utils/avatar_utils.dart';
 import 'package:dwellly_flutter/features/social/presentation/controllers/chat_controller.dart';
+import 'package:dwellly_flutter/core/services/notification_service.dart';
 import 'package:dwellly_flutter/features/social/presentation/screens/location_picker_screen.dart';
 import 'package:dwellly_flutter/features/auth/presentation/providers/user_providers.dart';
 import 'package:image_picker/image_picker.dart';
@@ -91,6 +92,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   @override
   void initState() {
     super.initState();
+    NotificationService.activeChatUserId = widget.userId;
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -114,6 +116,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     for (final player in _audioPlayers.values) {
       player.dispose();
     }
+    NotificationService.activeChatUserId = null;
     super.dispose();
   }
 
@@ -126,11 +129,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _scrollToBottom();
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+  void _scrollToBottom({bool isInitial = false}) {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted || !_scrollController.hasClients) return;
+
+      final target = _scrollController.position.maxScrollExtent;
+      if (isInitial) {
+        _scrollController.jumpTo(target);
+      } else {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          target,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -302,11 +310,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking images: $e')),
-        );
-      }
+      print('Error picking images: $e');
     }
   }
 
@@ -330,11 +334,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
-      }
+      print('Error picking image: $e');
     }
   }
 
@@ -365,11 +365,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sending image: $e')),
-        );
-      }
+      print('Error sending image: $e');
     }
   }
 
@@ -417,11 +413,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
       _scrollToBottom();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sending location: $e')),
-        );
-      }
+      print('Error sending location: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -442,11 +434,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         await _sendAttachment(result.files.single.path!, 'file');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking file: $e')),
-        );
-      }
+      print('Error picking file: $e');
     }
   }
 
@@ -485,11 +473,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         _scrollToBottom();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sending attachment: $e')),
-        );
-      }
+      print('Error sending attachment: $e');
     }
   }
 
@@ -536,11 +520,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error starting recording: $e')),
-        );
-      }
+      print('Error starting recording: $e');
     }
   }
 
@@ -602,11 +582,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         _isLocking = false;
         _amplitude = 0.0;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error stopping recording: $e')),
-        );
-      }
+      print('Error stopping recording: $e');
     }
   }
 
@@ -704,9 +680,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     ref.listen<AsyncValue<List<ChatMessage>>>(
       chatHistoryProvider(widget.userId),
       (previous, next) {
-        if (next.hasValue &&
-            (previous?.value?.length ?? 0) < (next.value?.length ?? 0)) {
-          _scrollToBottom();
+        if (next.hasValue) {
+          final prevLength = previous?.value?.length ?? 0;
+          final nextLength = next.value?.length ?? 0;
+
+          if (prevLength == 0 && nextLength > 0) {
+            _scrollToBottom(isInitial: true);
+          } else if (nextLength > prevLength) {
+            _scrollToBottom();
+          }
         }
       },
     );
@@ -755,11 +737,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.call, color: AppTheme.primaryGreen),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Calling feature coming soon')),
-              );
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -1033,12 +1011,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
               const SizedBox(width: 16),
               Icon(icon, color: Colors.white, size: 24),
               const SizedBox(width: 12),
-              Text(
-                message,
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+              Flexible(
+                child: Text(
+                  message,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -1327,54 +1307,63 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
           ),
         ),
         const SizedBox(width: 8),
-        GestureDetector(
-          onLongPressStart: (_) => _startRecording(),
-          onLongPressMoveUpdate: (details) {
-            final dx = details.localPosition.dx - 40;
-            final dy = details.localPosition.dy - 40;
-            setState(() {
-              _dragX = dx;
-              _dragY = dy;
-              if (_dragX < -50.0) {
-                _isCancelled = true;
-                _isLocking = false;
-              } else if (_dragY < -50.0) {
-                _isLocking = true;
-                _isCancelled = false;
-              } else {
-                _isCancelled = false;
-                _isLocking = false;
-              }
-            });
-          },
-          onLongPressEnd: (_) {
-            if (_isLocked || _isLocking) {
-              _lockRecording();
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _messageController,
+          builder: (context, value, child) {
+            final isTextEmpty = value.text.trim().isEmpty;
+
+            if (isTextEmpty) {
+              return GestureDetector(
+                onLongPressStart: (_) => _startRecording(),
+                onLongPressMoveUpdate: (details) {
+                  final dx = details.localPosition.dx - 40;
+                  final dy = details.localPosition.dy - 40;
+                  setState(() {
+                    _dragX = dx;
+                    _dragY = dy;
+                    if (_dragX < -50.0) {
+                      _isCancelled = true;
+                      _isLocking = false;
+                    } else if (_dragY < -50.0) {
+                      _isLocking = true;
+                      _isCancelled = false;
+                    } else {
+                      _isCancelled = false;
+                      _isLocking = false;
+                    }
+                  });
+                },
+                onLongPressEnd: (_) {
+                  if (_isLocked || _isLocking) {
+                    _lockRecording();
+                  } else {
+                    _stopRecording(isCancelled: _isCancelled);
+                  }
+                },
+                child: CircleAvatar(
+                  backgroundColor: _isCancelled
+                      ? Colors.red
+                      : (_isLocking ? Colors.orange : AppTheme.primaryGreen),
+                  child: IconButton(
+                    icon: const Icon(Icons.mic, color: Colors.white, size: 20),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Hold to record')),
+                      );
+                    },
+                  ),
+                ),
+              );
             } else {
-              _stopRecording(isCancelled: _isCancelled);
+              return CircleAvatar(
+                backgroundColor: AppTheme.primaryGreen,
+                child: IconButton(
+                  icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                  onPressed: _sendMessage,
+                ),
+              );
             }
           },
-          child: CircleAvatar(
-            backgroundColor: _isCancelled
-                ? Colors.red
-                : (_isLocking ? Colors.orange : AppTheme.primaryGreen),
-            child: IconButton(
-              icon: const Icon(Icons.mic, color: Colors.white, size: 20),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Hold to record')),
-                );
-              },
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        CircleAvatar(
-          backgroundColor: AppTheme.primaryGreen,
-          child: IconButton(
-            icon: const Icon(Icons.send, color: Colors.white, size: 20),
-            onPressed: _sendMessage,
-          ),
         ),
       ],
     );
