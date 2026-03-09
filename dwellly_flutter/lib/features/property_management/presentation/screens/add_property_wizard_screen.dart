@@ -8,6 +8,7 @@ import 'package:dwellly_flutter/core/network/api_client_provider.dart';
 import 'package:dwellly_flutter/features/listings/presentation/screens/home_screen.dart';
 import 'package:dwellly_flutter/features/listings/presentation/providers/room_provider.dart';
 import 'package:dwellly_flutter/core/theme/app_theme.dart';
+import 'package:dwellly_flutter/features/social/presentation/screens/location_picker_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Add Property Wizard Screen
@@ -35,6 +36,8 @@ class _AddPropertyWizardScreenState
   String _propertyType = 'Apartment';
   final List<String> _selectedFacilities = [];
   final List<String> _uploadedImages = [];
+  double? _latitude;
+  double? _longitude;
 
   // Static Photos for testing
   final List<String> _staticPhotos = [
@@ -174,13 +177,13 @@ class _AddPropertyWizardScreenState
       }
 
       final room = Room(
-        ownerId: 0, // Server will overwrite with authenticated user's ID
+        ownerId: 0,
         title: _titleController.text,
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? 0.0,
         location: _addressController.text,
-        latitude: 11.5564, // Default Phnom Penh for demo
-        longitude: 104.9282,
+        latitude: _latitude ?? 11.5564,
+        longitude: _longitude ?? 104.9282,
         rating: 4.5,
         type: _mapPropertyType(_propertyType),
         imageUrl: finalImages.isNotEmpty ? finalImages.first : null,
@@ -188,6 +191,7 @@ class _AddPropertyWizardScreenState
         isAvailable: true,
         createdAt: DateTime.now(),
         status: RoomStatus.pending,
+        facilityNames: _selectedFacilities,
       );
 
       final result = await client.room.createRoom(room);
@@ -392,6 +396,47 @@ class _AddPropertyWizardScreenState
             controller: _addressController,
             label: 'Address',
             hint: 'Full property address',
+          ),
+          const SizedBox(height: 20),
+
+          OutlinedButton.icon(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const LocationPickerScreen(userId: 0),
+                ),
+              );
+              if (result != null) {
+                setState(() {
+                  _addressController.text = result['address'];
+                  _latitude = result['latitude'];
+                  _longitude = result['longitude'];
+                });
+              }
+            },
+            icon: const Icon(Icons.map, color: AppTheme.primaryGreen),
+            label: Text(
+              _latitude != null && _longitude != null
+                  ? 'Location Selected'
+                  : 'Pick on Map',
+              style: GoogleFonts.outfit(
+                color: _latitude != null && _longitude != null
+                    ? AppTheme.primaryGreen
+                    : AppTheme.primaryBlack,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+              side: BorderSide(
+                color: _latitude != null && _longitude != null
+                    ? AppTheme.primaryGreen
+                    : AppTheme.dividerGray,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
           const SizedBox(height: 20),
 

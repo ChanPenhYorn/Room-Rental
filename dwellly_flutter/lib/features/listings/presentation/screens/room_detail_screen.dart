@@ -6,6 +6,8 @@ import 'package:dwellly_flutter/features/bookings/presentation/screens/booking_d
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dwellly_flutter/features/social/presentation/screens/chat_detail_screen.dart';
 import 'package:dwellly_flutter/features/social/presentation/providers/favourite_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/room_entity.dart';
 import '../controllers/review_controller.dart';
@@ -157,14 +159,18 @@ class RoomDetailScreen extends ConsumerWidget {
                               size: 16,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              room.location,
-                              style: GoogleFonts.outfit(
-                                color: Colors.grey[600],
-                                fontSize: 14,
+                            Expanded(
+                              child: Text(
+                                room.location,
+                                style: GoogleFonts.outfit(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 4),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -276,6 +282,85 @@ class RoomDetailScreen extends ConsumerWidget {
                                   ),
                                 );
                               },
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        if (room.latitude != 0 && room.longitude != 0) ...[
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'VENUE',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      room.location,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final url = Uri.parse(
+                                    'https://www.google.com/maps/dir/?api=1&destination=${room.latitude},${room.longitude}',
+                                  );
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  }
+                                },
+                                child: Text(
+                                  'Get Direction ->',
+                                  style: GoogleFonts.outfit(
+                                    color: AppTheme.primaryGreen,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: GoogleMap(
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(room.latitude, room.longitude),
+                                zoom: 15,
+                              ),
+                              liteModeEnabled: true,
+                              markers: {
+                                Marker(
+                                  markerId: const MarkerId('venue'),
+                                  position: LatLng(
+                                    room.latitude,
+                                    room.longitude,
+                                  ),
+                                ),
+                              },
+                              zoomControlsEnabled: false,
+                              mapToolbarEnabled: false,
+                              myLocationButtonEnabled: false,
                             ),
                           ),
                         ],
