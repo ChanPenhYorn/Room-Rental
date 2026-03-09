@@ -1,51 +1,59 @@
+# ─────────────────────────────────────────────────────────────────────────────
 # Build stage
+# NOTE: rootDir in render.yaml is "." so the Docker build context is the repo
+#       root. We must copy the workspace root pubspec.yaml, dwellly_server/,
+#       AND dwellly_client/ because dwellly_server uses "resolution: workspace".
+# ─────────────────────────────────────────────────────────────────────────────
 FROM dart:3.8.0 AS build
+
 WORKDIR /app
 
-# Copy the top-level workspace pubspec
+# 1. Copy the workspace root pubspec first (needed for workspace resolution).
 COPY pubspec.yaml .
 
-# Copy the server, client, and any other needed local packages
-# (We don't need dwellly_flutter for the server binary)
+# 2. Copy the server and client packages (dwellly_flutter is NOT needed here).
+#    We do NOT copy dwellly_flutter to keep the image small and avoid needing
+#    the Flutter SDK.
 COPY dwellly_server/ dwellly_server/
 COPY dwellly_client/ dwellly_client/
 
-WORKDIR /app/dwellly_server
-
-# Install dependencies and compile the server executable
+# 3. Resolve all workspace dependencies.
 RUN dart pub get
+
+# 4. Compile the server executable.
+WORKDIR /app/dwellly_server
 RUN dart compile exe bin/main.dart -o bin/server
-# Final stage
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Final / runtime stage — keep it tiny with Alpine
+# ─────────────────────────────────────────────────────────────────────────────
 FROM alpine:latest
 
-# Environment variables
+# Environment variables (can be overridden at runtime via Render)
 ENV runmode=production
 ENV serverid=default
 ENV logging=normal
 ENV role=monolith
 
-# Copy runtime dependencies
+# Copy Dart runtime libraries
 COPY --from=build /runtime/ /
 
 # Copy compiled server executable
-COPY --from=build /app/bin/server server
+COPY --from=build /app/dwellly_server/bin/server server
 
 # Copy configuration files and resources
-COPY --from=build /app/config/ config/
-COPY --from=build /app/web/ web/
-COPY --from=build /app/migrations/ migrations/
+COPY --from=build /app/dwellly_server/config/ config/
+COPY --from=build /app/dwellly_server/web/ web/
+COPY --from=build /app/dwellly_server/migrations/ migrations/
 
 # This file is required to enable the endpoint log filter in Insights.
-COPY --from=build /app/lib/src/generated/protocol.yaml lib/src/generated/protocol.yaml
+COPY --from=build /app/dwellly_server/lib/src/generated/protocol.yaml lib/src/generated/protocol.yaml
 
-# Custom entrypoint for dynamic configuration on Render
-COPY --from=build /app/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Expose ports
+# Expose Serverpod ports
 EXPOSE 8080
 EXPOSE 8081
 EXPOSE 8082
 
 # Define the entrypoint command
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./server", "--mode=$runmode", "--server-id=$serverid", "--logging=$logging", "--role=$role"]
+
