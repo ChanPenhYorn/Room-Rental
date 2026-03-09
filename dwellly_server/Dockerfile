@@ -11,11 +11,13 @@ WORKDIR /app
 # 1. Copy the workspace root pubspec first (needed for workspace resolution).
 COPY pubspec.yaml .
 
-# 2. Copy the server and client packages (dwellly_flutter is NOT needed here).
+# 2. Copy the server and client packages (dwellly_flutter is NOT needed here)
 #    We do NOT copy dwellly_flutter to keep the image small and avoid needing
-#    the Flutter SDK.
+#    the Flutter SDK. But the workspace root pubspec.yaml references it, so we
+#    need at least the pubspec.yaml to satisfy Dart workspace resolution.
 COPY dwellly_server/ dwellly_server/
 COPY dwellly_client/ dwellly_client/
+COPY dwellly_flutter/pubspec.yaml dwellly_flutter/pubspec.yaml
 
 # 3. Resolve all workspace dependencies.
 RUN dart pub get
