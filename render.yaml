@@ -1,0 +1,51 @@
+services:
+  # The Serverpod backend API
+  - type: web
+    name: dwellly-api
+    runtime: docker
+    rootDir: dwellly_server # Point Render to the dockerfile in dwellly_server module
+    plan: free # Can be updated to starter
+    envVars:
+      - key: runmode
+        value: production
+      - key: PORT
+        value: 8080
+      
+      # Database Connection variables (Supply these from your Render Postgres DB)
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      
+      # Serverpod requires these generated keys via Blueprint prompts
+      - key: SERVICE_SECRET
+        generateValue: true
+      - key: EMAIL_SECRET
+        generateValue: true
+      - key: JWT_PRIVATE_KEY
+        generateValue: true
+      - key: JWT_REFRESH_PEPPER
+        generateValue: true
+        
+      # Leave these un-synced so Render prompts the User to supply their keys when deploying
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+        
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
