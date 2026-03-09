@@ -5,6 +5,7 @@ services:
     runtime: docker
     rootDir: . # Needs to build from root because of Dart 3.8 workspaces
     dockerfilePath: dwellly_server/Dockerfile
+    dockerContext: . # Use repo root as Docker build context so dwellly_client/ is accessible
     plan: free # Can be updated to starter
     envVars:
       - key: runmode
