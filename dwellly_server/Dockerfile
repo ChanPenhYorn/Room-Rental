@@ -1,12 +1,20 @@
 # Build stage
 FROM dart:3.8.0 AS build
 WORKDIR /app
-COPY . .
+
+# Copy the top-level workspace pubspec
+COPY pubspec.yaml .
+
+# Copy the server, client, and any other needed local packages
+# (We don't need dwellly_flutter for the server binary)
+COPY dwellly_server/ dwellly_server/
+COPY dwellly_client/ dwellly_client/
+
+WORKDIR /app/dwellly_server
 
 # Install dependencies and compile the server executable
 RUN dart pub get
 RUN dart compile exe bin/main.dart -o bin/server
-
 # Final stage
 FROM alpine:latest
 

@@ -3,7 +3,8 @@ services:
   - type: web
     name: dwellly-api
     runtime: docker
-    rootDir: dwellly_server # Point Render to the dockerfile in dwellly_server module
+    rootDir: . # Needs to build from root because of Dart 3.8 workspaces
+    dockerfilePath: dwellly_server/Dockerfile
     plan: free # Can be updated to starter
     envVars:
       - key: runmode
