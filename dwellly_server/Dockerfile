@@ -11,18 +11,20 @@ WORKDIR /app
 # 1. Copy the workspace root pubspec first (needed for workspace resolution).
 COPY pubspec.yaml .
 
-# 2. Copy the server and client packages (dwellly_flutter is NOT needed here)
-#    We do NOT copy dwellly_flutter to keep the image small and avoid needing
-#    the Flutter SDK. But the workspace root pubspec.yaml references it, so we
-#    need at least the pubspec.yaml to satisfy Dart workspace resolution.
+# 2. Strip dwellly_flutter from the workspace list.
+#    The root pubspec.yaml lists dwellly_flutter as a workspace member, but it
+#    has Flutter SDK dependencies that can't be resolved with plain `dart pub get`.
+#    We only need dwellly_server + dwellly_client for the server binary.
+RUN sed -i '/dwellly_flutter/d' pubspec.yaml
+
+# 3. Copy the server and client packages only.
 COPY dwellly_server/ dwellly_server/
 COPY dwellly_client/ dwellly_client/
-COPY dwellly_flutter/pubspec.yaml dwellly_flutter/pubspec.yaml
 
-# 3. Resolve all workspace dependencies.
+# 4. Resolve workspace dependencies (server + client only, no Flutter).
 RUN dart pub get
 
-# 4. Compile the server executable.
+# 5. Compile the server executable.
 WORKDIR /app/dwellly_server
 RUN dart compile exe bin/main.dart -o bin/server
 
