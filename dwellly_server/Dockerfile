@@ -11,11 +11,10 @@ WORKDIR /app
 # 1. Copy the workspace root pubspec first (needed for workspace resolution).
 COPY pubspec.yaml .
 
-# 2. Strip dwellly_flutter from the workspace list.
-#    The root pubspec.yaml lists dwellly_flutter as a workspace member, but it
-#    has Flutter SDK dependencies that can't be resolved with plain `dart pub get`.
-#    We only need dwellly_server + dwellly_client for the server binary.
-RUN sed -i '/dwellly_flutter/d' pubspec.yaml
+# 2. Strip Flutter-SDK-dependent entries from the workspace pubspec.
+#    - dwellly_flutter: has flutter SDK packages, can't use plain dart pub get
+#    - flutter_secure_storage in dependency_overrides: also needs Flutter SDK
+RUN sed -i '/dwellly_flutter/d; /flutter_secure_storage/d' pubspec.yaml
 
 # 3. Copy the server and client packages only.
 COPY dwellly_server/ dwellly_server/
