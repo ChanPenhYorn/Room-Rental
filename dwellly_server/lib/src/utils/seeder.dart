@@ -45,17 +45,7 @@ class DataSeeder {
           : '🌱 Starting data seeding (Database empty)...',
     );
 
-    // Wipe data in correct order to respect foreign keys (children first)
-    await session.db.unsafeSimpleQuery('DELETE FROM app_notification');
-    await session.db.unsafeSimpleQuery('DELETE FROM review');
-    await session.db.unsafeSimpleQuery('DELETE FROM favorite');
-    await session.db.unsafeSimpleQuery('DELETE FROM room_facility');
-    await session.db.unsafeSimpleQuery('DELETE FROM facility');
-    await session.db.unsafeSimpleQuery('DELETE FROM become_owner_request');
-    await session.db.unsafeSimpleQuery('DELETE FROM chat_message');
-    await session.db.unsafeSimpleQuery('DELETE FROM contract');
-    await session.db.unsafeSimpleQuery('DELETE FROM bill');
-    await session.db.unsafeSimpleQuery('DELETE FROM booking');
+    // Wipe data in correct order to respect foreign keys
     await session.db.unsafeSimpleQuery('DELETE FROM room');
     await session.db.unsafeSimpleQuery('DELETE FROM "user"');
     await session.db.unsafeSimpleQuery(
@@ -69,26 +59,18 @@ class DataSeeder {
 
     User? owner;
 
-    session.log('Seeding default accounts...');
+    session.log('Seeding default owner account...');
     await _seedUser(
       session,
-      email: 'admin2@roomrental.com',
-      password: 'password',
-      fullName: 'Admin User',
-      role: UserRole.admin,
-    );
-
-    await _seedUser(
-      session,
-      email: 'owner@roomrental.com',
-      password: 'password',
+      email: 'chanpenh@example.com',
+      password: 'password123',
       fullName: 'Default Owner',
       role: UserRole.owner,
     );
 
     final newlyCreatedUserInfo = await Users.findUserByEmail(
       session,
-      'owner@roomrental.com',
+      'chanpenh@example.com',
     );
 
     if (newlyCreatedUserInfo != null) {

@@ -9,7 +9,7 @@
 # Configuration for the main API server.
 apiServer:
   port: 9080
-  publicHost: 0.0.0.0
+  publicHost: localhost
   publicPort: 9080
   publicScheme: http
 

@@ -57,7 +57,7 @@ class ChatEndpoint extends Endpoint {
     );
 
     final savedMessage = await ChatMessage.db.insertRow(session, message);
-    final fullMessage = await ChatMessage.db.findById(
+        final fullMessage = await ChatMessage.db.findById(
       session,
       savedMessage.id!,
       include: ChatMessage.include(
@@ -89,7 +89,6 @@ class ChatEndpoint extends Endpoint {
           'senderName': fullMessage.sender?.fullName ?? "User",
           'senderAvatar': fullMessage.sender?.profileImage ?? "",
         },
-        persist: false,
       );
     }
     return savedMessage;
@@ -255,7 +254,6 @@ class ChatEndpoint extends Endpoint {
           'senderName': fullMessage.sender?.fullName ?? "User",
           'senderAvatar': fullMessage.sender?.profileImage ?? "",
         },
-        persist: false,
       );
     }
     return savedMessage;

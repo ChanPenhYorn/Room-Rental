@@ -31,8 +31,6 @@ dependencies:
     sdk: flutter
   dwellly_client:
     path: ../dwellly_client
-  dwellly_chat:
-    path: ../packages/dwellly_chat
   serverpod_auth_idp_flutter: 3.3.0
   serverpod_flutter: 3.3.0
 
@@ -72,12 +70,9 @@ dependencies:
   open_filex: ^4.5.1
   image_gallery_saver_plus: ^4.0.1
   permission_handler: ^11.3.1
-  flutter_linkify: ^6.0.0
-  any_link_preview: ^3.0.3
-  linkify: ^5.0.0
-  google_maps_flutter: ^2.15.0
-  geolocator: ^14.0.2
   geocoding: ^4.0.0
+  geolocator: ^14.0.2
+  google_maps_flutter: ^2.15.0
 
 dev_dependencies:
   flutter_lints: ">=3.0.0 <7.0.0"

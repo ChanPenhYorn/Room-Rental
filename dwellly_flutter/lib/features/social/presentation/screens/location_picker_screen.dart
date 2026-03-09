@@ -74,13 +74,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         accuracy: LocationAccuracy.high,
       ),
     );
-    print('DEBUG: [LocationPicker] current position: $position');
+    debugPrint('DEBUG: [LocationPicker] current position: $position');
     setState(() {
       _currentPosition = position;
       _selectedLocation = LatLng(position.latitude, position.longitude);
       _isLoading = false;
     });
-    print(
+    debugPrint(
       'DEBUG: [LocationPicker] Initialized selected location: $_selectedLocation',
     );
     _updateAddress(_selectedLocation!);
@@ -91,7 +91,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       return;
     }
 
-    print('DEBUG: [LocationPicker] Updating address for: $location');
+    debugPrint('DEBUG: [LocationPicker] Updating address for: $location');
 
     setState(() {
       _isLoadingAddress = true;
@@ -119,7 +119,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         });
       }
     } catch (e) {
-      print('DEBUG: [LocationPicker] geocoding failed for $location: $e');
+      debugPrint('DEBUG: [LocationPicker] geocoding failed for $location: $e');
       setState(() {
         _address = null;
       });

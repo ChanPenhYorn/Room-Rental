@@ -18,7 +18,6 @@ fields:
   rejectionReason: String?
   pendingData: String?
   hasPendingEdit: bool, default=false
-  facilityNames: List<String>?, persist=false
   facilities: List<RoomFacility>?, relation(name=room_facilities)
   bookings: List<Booking>?, relation(name=room_bookings)
   favorites: List<Favorite>?, relation

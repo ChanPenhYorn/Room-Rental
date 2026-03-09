@@ -41,7 +41,6 @@ abstract class Room implements _i1.SerializableModel {
     this.rejectionReason,
     this.pendingData,
     bool? hasPendingEdit,
-    this.facilityNames,
     this.facilities,
     this.bookings,
     this.favorites,
@@ -68,7 +67,6 @@ abstract class Room implements _i1.SerializableModel {
     String? rejectionReason,
     String? pendingData,
     bool? hasPendingEdit,
-    List<String>? facilityNames,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -104,11 +102,6 @@ abstract class Room implements _i1.SerializableModel {
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
       pendingData: jsonSerialization['pendingData'] as String?,
       hasPendingEdit: jsonSerialization['hasPendingEdit'] as bool?,
-      facilityNames: jsonSerialization['facilityNames'] == null
-          ? null
-          : _i9.Protocol().deserialize<List<String>>(
-              jsonSerialization['facilityNames'],
-            ),
       facilities: jsonSerialization['facilities'] == null
           ? null
           : _i9.Protocol().deserialize<List<_i5.RoomFacility>>(
@@ -173,8 +166,6 @@ abstract class Room implements _i1.SerializableModel {
 
   bool hasPendingEdit;
 
-  List<String>? facilityNames;
-
   List<_i5.RoomFacility>? facilities;
 
   List<_i6.Booking>? bookings;
@@ -206,7 +197,6 @@ abstract class Room implements _i1.SerializableModel {
     String? rejectionReason,
     String? pendingData,
     bool? hasPendingEdit,
-    List<String>? facilityNames,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -235,7 +225,6 @@ abstract class Room implements _i1.SerializableModel {
       if (rejectionReason != null) 'rejectionReason': rejectionReason,
       if (pendingData != null) 'pendingData': pendingData,
       'hasPendingEdit': hasPendingEdit,
-      if (facilityNames != null) 'facilityNames': facilityNames?.toJson(),
       if (facilities != null)
         'facilities': facilities?.toJson(valueToJson: (v) => v.toJson()),
       if (bookings != null)
@@ -276,7 +265,6 @@ class _RoomImpl extends Room {
     String? rejectionReason,
     String? pendingData,
     bool? hasPendingEdit,
-    List<String>? facilityNames,
     List<_i5.RoomFacility>? facilities,
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
@@ -301,7 +289,6 @@ class _RoomImpl extends Room {
          rejectionReason: rejectionReason,
          pendingData: pendingData,
          hasPendingEdit: hasPendingEdit,
-         facilityNames: facilityNames,
          facilities: facilities,
          bookings: bookings,
          favorites: favorites,
@@ -332,7 +319,6 @@ class _RoomImpl extends Room {
     Object? rejectionReason = _Undefined,
     Object? pendingData = _Undefined,
     bool? hasPendingEdit,
-    Object? facilityNames = _Undefined,
     Object? facilities = _Undefined,
     Object? bookings = _Undefined,
     Object? favorites = _Undefined,
@@ -362,9 +348,6 @@ class _RoomImpl extends Room {
           : this.rejectionReason,
       pendingData: pendingData is String? ? pendingData : this.pendingData,
       hasPendingEdit: hasPendingEdit ?? this.hasPendingEdit,
-      facilityNames: facilityNames is List<String>?
-          ? facilityNames
-          : this.facilityNames?.map((e0) => e0).toList(),
       facilities: facilities is List<_i5.RoomFacility>?
           ? facilities
           : this.facilities?.map((e0) => e0.copyWith()).toList(),

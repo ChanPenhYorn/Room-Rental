@@ -37,10 +37,7 @@ class NotificationNotifier
   Future<void> _silentRefresh() async {
     print('🔔 [Notifications] Polling for updates...');
     try {
-      final allNotifications = await client.notification.getMyNotifications();
-      final notifications = allNotifications
-          .where((n) => n.data?['type'] != 'chat')
-          .toList();
+      final notifications = await client.notification.getMyNotifications();
 
       // Check for new notifications to alert the user
       state.whenData((previousList) {
@@ -66,10 +63,7 @@ class NotificationNotifier
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     try {
-      final allNotifications = await client.notification.getMyNotifications();
-      final notifications = allNotifications
-          .where((n) => n.data?['type'] != 'chat')
-          .toList();
+      final notifications = await client.notification.getMyNotifications();
       state = AsyncValue.data(notifications);
 
       // Update unread count

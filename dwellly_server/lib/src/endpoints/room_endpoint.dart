@@ -18,9 +18,6 @@ class RoomEndpoint extends Endpoint {
           t.isAvailable.equals(true) & t.status.equals(RoomStatus.approved),
       include: Room.include(
         owner: User.include(),
-        facilities: RoomFacility.includeList(
-          include: RoomFacility.include(facility: Facility.include()),
-        ),
       ),
       orderBy: (t) => t.createdAt,
       orderDescending: true,
@@ -53,12 +50,7 @@ class RoomEndpoint extends Endpoint {
           (t.title.ilike('%$query%') | t.location.ilike('%$query%')) &
           t.isAvailable.equals(true) &
           t.status.equals(RoomStatus.approved),
-      include: Room.include(
-        owner: User.include(),
-        facilities: RoomFacility.includeList(
-          include: RoomFacility.include(facility: Facility.include()),
-        ),
-      ),
+      include: Room.include(owner: User.include()),
     );
   }
 
@@ -89,12 +81,7 @@ class RoomEndpoint extends Endpoint {
         }
         return filter;
       },
-      include: Room.include(
-        owner: User.include(),
-        facilities: RoomFacility.includeList(
-          include: RoomFacility.include(facility: Facility.include()),
-        ),
-      ),
+      include: Room.include(owner: User.include()),
     );
   }
 
@@ -113,7 +100,6 @@ class RoomEndpoint extends Endpoint {
     room.status = RoomStatus.pending;
 
     final createdRoom = await Room.db.insertRow(session, room);
-
     session.log(
       'createRoom: Room created with id=${createdRoom.id} for user=${user.id}',
     );
@@ -126,17 +112,7 @@ class RoomEndpoint extends Endpoint {
       data: {'type': 'room_submission', 'roomId': createdRoom.id.toString()},
     );
 
-    // Return room with facilities included
-    return await Room.db.findById(
-      session,
-      createdRoom.id!,
-      include: Room.include(
-        owner: User.include(),
-        facilities: RoomFacility.includeList(
-          include: RoomFacility.include(facility: Facility.include()),
-        ),
-      ),
-    );
+    return createdRoom;
   }
 
   /// Upload a room image and return its URL
@@ -178,12 +154,7 @@ class RoomEndpoint extends Endpoint {
     return await Room.db.find(
       session,
       where: (t) => t.ownerId.equals(user.id!),
-      include: Room.include(
-        owner: User.include(),
-        facilities: RoomFacility.includeList(
-          include: RoomFacility.include(facility: Facility.include()),
-        ),
-      ),
+      include: Room.include(owner: User.include()),
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
@@ -196,12 +167,7 @@ class RoomEndpoint extends Endpoint {
 
     return await Room.db.find(
       session,
-      include: Room.include(
-        owner: User.include(),
-        facilities: RoomFacility.includeList(
-          include: RoomFacility.include(facility: Facility.include()),
-        ),
-      ),
+      include: Room.include(owner: User.include()),
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
@@ -220,12 +186,7 @@ class RoomEndpoint extends Endpoint {
       final rooms = await Room.db.find(
         session,
         where: (t) => t.status.equals(RoomStatus.pending),
-        include: Room.include(
-          owner: User.include(),
-          facilities: RoomFacility.includeList(
-            include: RoomFacility.include(facility: Facility.include()),
-          ),
-        ),
+        include: Room.include(owner: User.include()),
         orderBy: (t) => t.createdAt,
         orderDescending: true,
       );
@@ -236,12 +197,7 @@ class RoomEndpoint extends Endpoint {
         session,
         where: (t) =>
             t.status.equals(RoomStatus.pending) & t.ownerId.equals(user.id!),
-        include: Room.include(
-          owner: User.include(),
-          facilities: RoomFacility.includeList(
-            include: RoomFacility.include(facility: Facility.include()),
-          ),
-        ),
+        include: Room.include(owner: User.include()),
         orderBy: (t) => t.createdAt,
         orderDescending: true,
       );
