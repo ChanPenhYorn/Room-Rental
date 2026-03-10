@@ -7,6 +7,3 @@ environment:
 workspace:
   - dwellly_client
   - dwellly_server
-  - dwellly_flutter
-dependency_overrides:
-  flutter_secure_storage: ^10.0.0

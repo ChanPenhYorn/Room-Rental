@@ -455,6 +455,8 @@ class FavoriteRepository {
     _i1.OrderByListBuilder<FavoriteTable>? orderByList,
     _i1.Transaction? transaction,
     FavoriteInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<Favorite>(
       where: where?.call(Favorite.t),
@@ -465,6 +467,8 @@ class FavoriteRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -494,6 +498,8 @@ class FavoriteRepository {
     _i1.OrderByListBuilder<FavoriteTable>? orderByList,
     _i1.Transaction? transaction,
     FavoriteInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<Favorite>(
       where: where?.call(Favorite.t),
@@ -503,6 +509,8 @@ class FavoriteRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -512,11 +520,15 @@ class FavoriteRepository {
     int id, {
     _i1.Transaction? transaction,
     FavoriteInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<Favorite>(
       id,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -526,14 +538,20 @@ class FavoriteRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
+  ///
+  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
+  /// rows are silently skipped, and only the successfully inserted rows are
+  /// returned.
   Future<List<Favorite>> insert(
     _i1.Session session,
     List<Favorite> rows, {
     _i1.Transaction? transaction,
+    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<Favorite>(
       rows,
       transaction: transaction,
+      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -674,6 +692,22 @@ class FavoriteRepository {
     return session.db.count<Favorite>(
       where: where?.call(Favorite.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+
+  /// Acquires row-level locks on [Favorite] rows matching the [where] expression.
+  Future<void> lockRows(
+    _i1.Session session, {
+    required _i1.WhereExpressionBuilder<FavoriteTable> where,
+    required _i1.LockMode lockMode,
+    required _i1.Transaction transaction,
+    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
+  }) async {
+    return session.db.lockRows<Favorite>(
+      where: where(Favorite.t),
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }

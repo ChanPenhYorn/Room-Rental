@@ -18,6 +18,9 @@ class RoomEndpoint extends Endpoint {
           t.isAvailable.equals(true) & t.status.equals(RoomStatus.approved),
       include: Room.include(
         owner: User.include(),
+        facilities: RoomFacility.includeList(
+          include: RoomFacility.include(facility: Facility.include()),
+        ),
       ),
       orderBy: (t) => t.createdAt,
       orderDescending: true,
@@ -50,7 +53,12 @@ class RoomEndpoint extends Endpoint {
           (t.title.ilike('%$query%') | t.location.ilike('%$query%')) &
           t.isAvailable.equals(true) &
           t.status.equals(RoomStatus.approved),
-      include: Room.include(owner: User.include()),
+      include: Room.include(
+        owner: User.include(),
+        facilities: RoomFacility.includeList(
+          include: RoomFacility.include(facility: Facility.include()),
+        ),
+      ),
     );
   }
 
@@ -81,7 +89,12 @@ class RoomEndpoint extends Endpoint {
         }
         return filter;
       },
-      include: Room.include(owner: User.include()),
+      include: Room.include(
+        owner: User.include(),
+        facilities: RoomFacility.includeList(
+          include: RoomFacility.include(facility: Facility.include()),
+        ),
+      ),
     );
   }
 
@@ -100,6 +113,24 @@ class RoomEndpoint extends Endpoint {
     room.status = RoomStatus.pending;
 
     final createdRoom = await Room.db.insertRow(session, room);
+    if (room.facilityNames != null) {
+      for (final name in room.facilityNames!) {
+        var facility = await Facility.db.findFirstRow(
+          session,
+          where: (t) => t.name.equals(name),
+        );
+        if (facility == null) {
+          facility = await Facility.db.insertRow(
+            session,
+            Facility(name: name, icon: 'check'),
+          );
+        }
+        await RoomFacility.db.insertRow(
+          session,
+          RoomFacility(roomId: createdRoom.id!, facilityId: facility.id!),
+        );
+      }
+    }
     session.log(
       'createRoom: Room created with id=${createdRoom.id} for user=${user.id}',
     );
@@ -154,7 +185,12 @@ class RoomEndpoint extends Endpoint {
     return await Room.db.find(
       session,
       where: (t) => t.ownerId.equals(user.id!),
-      include: Room.include(owner: User.include()),
+      include: Room.include(
+        owner: User.include(),
+        facilities: RoomFacility.includeList(
+          include: RoomFacility.include(facility: Facility.include()),
+        ),
+      ),
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
@@ -167,7 +203,12 @@ class RoomEndpoint extends Endpoint {
 
     return await Room.db.find(
       session,
-      include: Room.include(owner: User.include()),
+      include: Room.include(
+        owner: User.include(),
+        facilities: RoomFacility.includeList(
+          include: RoomFacility.include(facility: Facility.include()),
+        ),
+      ),
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
@@ -186,7 +227,12 @@ class RoomEndpoint extends Endpoint {
       final rooms = await Room.db.find(
         session,
         where: (t) => t.status.equals(RoomStatus.pending),
-        include: Room.include(owner: User.include()),
+        include: Room.include(
+          owner: User.include(),
+          facilities: RoomFacility.includeList(
+            include: RoomFacility.include(facility: Facility.include()),
+          ),
+        ),
         orderBy: (t) => t.createdAt,
         orderDescending: true,
       );
@@ -197,7 +243,12 @@ class RoomEndpoint extends Endpoint {
         session,
         where: (t) =>
             t.status.equals(RoomStatus.pending) & t.ownerId.equals(user.id!),
-        include: Room.include(owner: User.include()),
+        include: Room.include(
+          owner: User.include(),
+          facilities: RoomFacility.includeList(
+            include: RoomFacility.include(facility: Facility.include()),
+          ),
+        ),
         orderBy: (t) => t.createdAt,
         orderDescending: true,
       );

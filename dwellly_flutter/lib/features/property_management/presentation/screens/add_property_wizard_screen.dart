@@ -188,6 +188,7 @@ class _AddPropertyWizardScreenState
         isAvailable: true,
         createdAt: DateTime.now(),
         status: RoomStatus.pending,
+        facilityNames: _selectedFacilities,
       );
 
       final result = await client.room.createRoom(room);

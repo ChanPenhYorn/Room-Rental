@@ -46,6 +46,7 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     this.bookings,
     this.favorites,
     this.reviews,
+    this.facilityNames,
   }) : hasPendingEdit = hasPendingEdit ?? false;
 
   factory Room({
@@ -72,6 +73,7 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
     List<_i8.Review>? reviews,
+    List<String>? facilityNames,
   }) = _RoomImpl;
 
   factory Room.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -95,14 +97,18 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
           : _i9.Protocol().deserialize<List<String>>(
               jsonSerialization['images'],
             ),
-      isAvailable: jsonSerialization['isAvailable'] as bool,
+      isAvailable: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['isAvailable'],
+      ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
       status: _i4.RoomStatus.fromJson((jsonSerialization['status'] as String)),
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
       pendingData: jsonSerialization['pendingData'] as String?,
-      hasPendingEdit: jsonSerialization['hasPendingEdit'] as bool?,
+      hasPendingEdit: jsonSerialization['hasPendingEdit'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['hasPendingEdit']),
       facilities: jsonSerialization['facilities'] == null
           ? null
           : _i9.Protocol().deserialize<List<_i5.RoomFacility>>(
@@ -122,6 +128,11 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
           ? null
           : _i9.Protocol().deserialize<List<_i8.Review>>(
               jsonSerialization['reviews'],
+            ),
+      facilityNames: jsonSerialization['facilityNames'] == null
+          ? null
+          : _i9.Protocol().deserialize<List<String>>(
+              jsonSerialization['facilityNames'],
             ),
     );
   }
@@ -177,6 +188,8 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   List<_i8.Review>? reviews;
 
+  List<String>? facilityNames;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -207,6 +220,7 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
     List<_i8.Review>? reviews,
+    List<String>? facilityNames,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -239,6 +253,7 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
         'favorites': favorites?.toJson(valueToJson: (v) => v.toJson()),
       if (reviews != null)
         'reviews': reviews?.toJson(valueToJson: (v) => v.toJson()),
+      if (facilityNames != null) 'facilityNames': facilityNames?.toJson(),
     };
   }
 
@@ -277,6 +292,7 @@ abstract class Room implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
         ),
       if (reviews != null)
         'reviews': reviews?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (facilityNames != null) 'facilityNames': facilityNames?.toJson(),
     };
   }
 
@@ -349,6 +365,7 @@ class _RoomImpl extends Room {
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
     List<_i8.Review>? reviews,
+    List<String>? facilityNames,
   }) : super._(
          id: id,
          ownerId: ownerId,
@@ -373,6 +390,7 @@ class _RoomImpl extends Room {
          bookings: bookings,
          favorites: favorites,
          reviews: reviews,
+         facilityNames: facilityNames,
        );
 
   /// Returns a shallow copy of this [Room]
@@ -403,6 +421,7 @@ class _RoomImpl extends Room {
     Object? bookings = _Undefined,
     Object? favorites = _Undefined,
     Object? reviews = _Undefined,
+    Object? facilityNames = _Undefined,
   }) {
     return Room(
       id: id is int? ? id : this.id,
@@ -440,6 +459,9 @@ class _RoomImpl extends Room {
       reviews: reviews is List<_i8.Review>?
           ? reviews
           : this.reviews?.map((e0) => e0.copyWith()).toList(),
+      facilityNames: facilityNames is List<String>?
+          ? facilityNames
+          : this.facilityNames?.map((e0) => e0).toList(),
     );
   }
 }
@@ -537,6 +559,13 @@ class RoomUpdateTable extends _i1.UpdateTable<RoomTable> {
     table.hasPendingEdit,
     value,
   );
+
+  _i1.ColumnValue<List<String>, List<String>> facilityNames(
+    List<String>? value,
+  ) => _i1.ColumnValue(
+    table.facilityNames,
+    value,
+  );
 }
 
 class RoomTable extends _i1.Table<int?> {
@@ -613,6 +642,10 @@ class RoomTable extends _i1.Table<int?> {
       this,
       hasDefault: true,
     );
+    facilityNames = _i1.ColumnSerializable<List<String>>(
+      'facilityNames',
+      this,
+    );
   }
 
   late final RoomUpdateTable updateTable;
@@ -668,6 +701,8 @@ class RoomTable extends _i1.Table<int?> {
   _i8.ReviewTable? ___reviews;
 
   _i1.ManyRelation<_i8.ReviewTable>? _reviews;
+
+  late final _i1.ColumnSerializable<List<String>> facilityNames;
 
   _i2.UserTable get owner {
     if (_owner != null) return _owner!;
@@ -830,6 +865,7 @@ class RoomTable extends _i1.Table<int?> {
     rejectionReason,
     pendingData,
     hasPendingEdit,
+    facilityNames,
   ];
 
   @override
@@ -954,6 +990,8 @@ class RoomRepository {
     _i1.OrderByListBuilder<RoomTable>? orderByList,
     _i1.Transaction? transaction,
     RoomInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<Room>(
       where: where?.call(Room.t),
@@ -964,6 +1002,8 @@ class RoomRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -993,6 +1033,8 @@ class RoomRepository {
     _i1.OrderByListBuilder<RoomTable>? orderByList,
     _i1.Transaction? transaction,
     RoomInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<Room>(
       where: where?.call(Room.t),
@@ -1002,6 +1044,8 @@ class RoomRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -1011,11 +1055,15 @@ class RoomRepository {
     int id, {
     _i1.Transaction? transaction,
     RoomInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<Room>(
       id,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -1025,14 +1073,20 @@ class RoomRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
+  ///
+  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
+  /// rows are silently skipped, and only the successfully inserted rows are
+  /// returned.
   Future<List<Room>> insert(
     _i1.Session session,
     List<Room> rows, {
     _i1.Transaction? transaction,
+    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<Room>(
       rows,
       transaction: transaction,
+      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -1173,6 +1227,22 @@ class RoomRepository {
     return session.db.count<Room>(
       where: where?.call(Room.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+
+  /// Acquires row-level locks on [Room] rows matching the [where] expression.
+  Future<void> lockRows(
+    _i1.Session session, {
+    required _i1.WhereExpressionBuilder<RoomTable> where,
+    required _i1.LockMode lockMode,
+    required _i1.Transaction transaction,
+    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
+  }) async {
+    return session.db.lockRows<Room>(
+      where: where(Room.t),
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }

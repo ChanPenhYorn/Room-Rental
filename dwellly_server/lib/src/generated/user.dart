@@ -82,7 +82,9 @@ abstract class User implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       role: _i3.UserRole.fromJson((jsonSerialization['role'] as String)),
       profileImage: jsonSerialization['profileImage'] as String?,
       fcmToken: jsonSerialization['fcmToken'] as String?,
-      isOnline: jsonSerialization['isOnline'] as bool?,
+      isOnline: jsonSerialization['isOnline'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isOnline']),
       lastSeen: jsonSerialization['lastSeen'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['lastSeen']),
@@ -940,6 +942,8 @@ class UserRepository {
     _i1.OrderByListBuilder<UserTable>? orderByList,
     _i1.Transaction? transaction,
     UserInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<User>(
       where: where?.call(User.t),
@@ -950,6 +954,8 @@ class UserRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -979,6 +985,8 @@ class UserRepository {
     _i1.OrderByListBuilder<UserTable>? orderByList,
     _i1.Transaction? transaction,
     UserInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<User>(
       where: where?.call(User.t),
@@ -988,6 +996,8 @@ class UserRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -997,11 +1007,15 @@ class UserRepository {
     int id, {
     _i1.Transaction? transaction,
     UserInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<User>(
       id,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -1011,14 +1025,20 @@ class UserRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
+  ///
+  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
+  /// rows are silently skipped, and only the successfully inserted rows are
+  /// returned.
   Future<List<User>> insert(
     _i1.Session session,
     List<User> rows, {
     _i1.Transaction? transaction,
+    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<User>(
       rows,
       transaction: transaction,
+      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -1159,6 +1179,22 @@ class UserRepository {
     return session.db.count<User>(
       where: where?.call(User.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+
+  /// Acquires row-level locks on [User] rows matching the [where] expression.
+  Future<void> lockRows(
+    _i1.Session session, {
+    required _i1.WhereExpressionBuilder<UserTable> where,
+    required _i1.LockMode lockMode,
+    required _i1.Transaction transaction,
+    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
+  }) async {
+    return session.db.lockRows<User>(
+      where: where(User.t),
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }

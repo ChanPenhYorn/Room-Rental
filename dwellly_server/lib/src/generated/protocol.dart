@@ -998,6 +998,12 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'bool',
           columnDefault: 'false',
         ),
+        _i2.ColumnDefinition(
+          name: 'facilityNames',
+          columnType: _i2.ColumnType.json,
+          isNullable: true,
+          dartType: 'List<String>?',
+        ),
       ],
       foreignKeys: [
         _i2.ForeignKeyDefinition(

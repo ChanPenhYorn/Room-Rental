@@ -51,7 +51,7 @@ abstract class AppNotification implements _i1.SerializableModel {
           : _i3.Protocol().deserialize<Map<String, String>>(
               jsonSerialization['data'],
             ),
-      isRead: jsonSerialization['isRead'] as bool,
+      isRead: _i1.BoolJsonExtension.fromJson(jsonSerialization['isRead']),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),

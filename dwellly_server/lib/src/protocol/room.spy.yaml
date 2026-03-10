@@ -22,3 +22,4 @@ fields:
   bookings: List<Booking>?, relation(name=room_bookings)
   favorites: List<Favorite>?, relation
   reviews: List<Review>?, relation
+  facilityNames: List<String>?

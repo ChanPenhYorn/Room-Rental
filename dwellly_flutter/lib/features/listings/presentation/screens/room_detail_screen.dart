@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:dwellly_client/room_rental_client.dart';
 import 'package:dwellly_flutter/features/bookings/presentation/screens/booking_date_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -197,40 +199,7 @@ class RoomDetailScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          'Facilities',
-                          style: GoogleFonts.outfit(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: room.facilities
-                              .map(
-                                (facility) => Chip(
-                                  backgroundColor: Colors.grey[50],
-                                  side: BorderSide(color: Colors.grey.shade200),
-                                  label: Text(
-                                    facility,
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
-                                  avatar: Icon(
-                                    Icons.check_circle,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 18,
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Description',
+                          'VENUE',
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -238,47 +207,72 @@ class RoomDetailScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          room.description,
-                          style: GoogleFonts.outfit(
-                            color: Colors.grey[600],
-                            height: 1.6,
-                            fontSize: 14,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              room.location,
+                              style: GoogleFonts.outfit(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                final url = Uri.parse(
+                                  'https://www.google.com/maps/search/?api=1&query=${room.latitude},${room.longitude}',
+                                );
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                }
+                              },
+                              child: Text(
+                                'Get Direction ->',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryGreen,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: SizedBox(
+                            height: 180,
+                            child: GoogleMap(
+                              initialCameraPosition: CameraPosition(
+                                target: LatLng(
+                                  room.latitude,
+                                  room.longitude,
+                                ),
+                                zoom: 15,
+                              ),
+                              markers: {
+                                Marker(
+                                  markerId: const MarkerId('room_location'),
+                                  position: LatLng(
+                                    room.latitude,
+                                    room.longitude,
+                                  ),
+                                ),
+                              },
+                              liteModeEnabled: true,
+                              zoomControlsEnabled: false,
+                              mapToolbarEnabled: false,
+                              myLocationButtonEnabled: false,
+                              scrollGesturesEnabled: false,
+                              rotateGesturesEnabled: false,
+                              tiltGesturesEnabled: false,
+                              zoomGesturesEnabled: false,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        if (room.images.isNotEmpty) ...[
-                          Text(
-                            'Gallery',
-                            style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1E293B),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            height: 100,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: room.images.length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: _buildImageWidget(
-                                      room.images[index],
-                                      width: 140,
-                                      height: 100,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

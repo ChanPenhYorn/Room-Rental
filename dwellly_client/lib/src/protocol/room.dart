@@ -45,6 +45,7 @@ abstract class Room implements _i1.SerializableModel {
     this.bookings,
     this.favorites,
     this.reviews,
+    this.facilityNames,
   }) : hasPendingEdit = hasPendingEdit ?? false;
 
   factory Room({
@@ -71,6 +72,7 @@ abstract class Room implements _i1.SerializableModel {
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
     List<_i8.Review>? reviews,
+    List<String>? facilityNames,
   }) = _RoomImpl;
 
   factory Room.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -94,14 +96,18 @@ abstract class Room implements _i1.SerializableModel {
           : _i9.Protocol().deserialize<List<String>>(
               jsonSerialization['images'],
             ),
-      isAvailable: jsonSerialization['isAvailable'] as bool,
+      isAvailable: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['isAvailable'],
+      ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
       status: _i4.RoomStatus.fromJson((jsonSerialization['status'] as String)),
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
       pendingData: jsonSerialization['pendingData'] as String?,
-      hasPendingEdit: jsonSerialization['hasPendingEdit'] as bool?,
+      hasPendingEdit: jsonSerialization['hasPendingEdit'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['hasPendingEdit']),
       facilities: jsonSerialization['facilities'] == null
           ? null
           : _i9.Protocol().deserialize<List<_i5.RoomFacility>>(
@@ -121,6 +127,11 @@ abstract class Room implements _i1.SerializableModel {
           ? null
           : _i9.Protocol().deserialize<List<_i8.Review>>(
               jsonSerialization['reviews'],
+            ),
+      facilityNames: jsonSerialization['facilityNames'] == null
+          ? null
+          : _i9.Protocol().deserialize<List<String>>(
+              jsonSerialization['facilityNames'],
             ),
     );
   }
@@ -174,6 +185,8 @@ abstract class Room implements _i1.SerializableModel {
 
   List<_i8.Review>? reviews;
 
+  List<String>? facilityNames;
+
   /// Returns a shallow copy of this [Room]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -201,6 +214,7 @@ abstract class Room implements _i1.SerializableModel {
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
     List<_i8.Review>? reviews,
+    List<String>? facilityNames,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -233,6 +247,7 @@ abstract class Room implements _i1.SerializableModel {
         'favorites': favorites?.toJson(valueToJson: (v) => v.toJson()),
       if (reviews != null)
         'reviews': reviews?.toJson(valueToJson: (v) => v.toJson()),
+      if (facilityNames != null) 'facilityNames': facilityNames?.toJson(),
     };
   }
 
@@ -269,6 +284,7 @@ class _RoomImpl extends Room {
     List<_i6.Booking>? bookings,
     List<_i7.Favorite>? favorites,
     List<_i8.Review>? reviews,
+    List<String>? facilityNames,
   }) : super._(
          id: id,
          ownerId: ownerId,
@@ -293,6 +309,7 @@ class _RoomImpl extends Room {
          bookings: bookings,
          favorites: favorites,
          reviews: reviews,
+         facilityNames: facilityNames,
        );
 
   /// Returns a shallow copy of this [Room]
@@ -323,6 +340,7 @@ class _RoomImpl extends Room {
     Object? bookings = _Undefined,
     Object? favorites = _Undefined,
     Object? reviews = _Undefined,
+    Object? facilityNames = _Undefined,
   }) {
     return Room(
       id: id is int? ? id : this.id,
@@ -360,6 +378,9 @@ class _RoomImpl extends Room {
       reviews: reviews is List<_i8.Review>?
           ? reviews
           : this.reviews?.map((e0) => e0.copyWith()).toList(),
+      facilityNames: facilityNames is List<String>?
+          ? facilityNames
+          : this.facilityNames?.map((e0) => e0).toList(),
     );
   }
 }
