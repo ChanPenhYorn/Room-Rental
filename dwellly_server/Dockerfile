@@ -49,13 +49,10 @@ COPY --from=build /app/dwellly_server/config/ config/
 COPY --from=build /app/dwellly_server/web/ web/
 COPY --from=build /app/dwellly_server/migrations/ migrations/
 
-# Create passwords.yaml from environment variables for production
-RUN echo "production:" > config/passwords.yaml && \
-    echo "  database: '${SERVERPOD_PASSWORD_database}'" >> config/passwords.yaml && \
-    echo "  serviceSecret: '${SERVERPOD_SERVICE_SECRET:-default}'" >> config/passwords.yaml && \
-    echo "  emailSecretHashPepper: '${SERVERPOD_EMAIL_SECRET:-WnPg1ks_EiQsnNddES_yrG0-Rksll0ho}'" >> config/passwords.yaml && \
-    echo "  jwtHmacSha512PrivateKey: '${SERVERPOD_JWT_PRIVATE_KEY:-qP0XF6IaEhaFP8idQn-ehK98SHLEZd2c}'" >> config/passwords.yaml && \
-    echo "  jwtRefreshTokenHashPepper: '${SERVERPOD_JWT_REFRESH:-zcXFvmuRqQrOWRucLASf5R_mV_DV4m6k}'" >> config/passwords.yaml
+# passwords.yaml is copied from the build stage (config/ directory above).
+# It already contains correct production credentials committed to the repo.
+# We do NOT overwrite it here — env-var substitution at RUN time doesn't work
+# on Render because secret env vars are only available at container runtime.
 
 # This file is required to enable the endpoint log filter in Insights.
 COPY --from=build /app/dwellly_server/lib/src/generated/protocol.yaml lib/src/generated/protocol.yaml
@@ -66,5 +63,5 @@ EXPOSE 8081
 EXPOSE 8082
 
 # Define the entrypoint command (shell form for env var expansion)
-ENTRYPOINT ./server --mode=$runmode --server-id=$serverid --logging=$logging --role=$role
+ENTRYPOINT ["sh", "-c", "./server --mode=$runmode --server-id=$serverid --logging=$logging --role=$role"]
 

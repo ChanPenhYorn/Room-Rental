@@ -12,19 +12,7 @@ services:
         value: production
       - key: PORT
         value: 8080
-      
-      # Database Connection variables (Supply these from your Render Postgres DB)
-      - key: DB_HOST
-        sync: false
-      - key: DB_PORT
-        sync: false
-      - key: DB_NAME
-        sync: false
-      - key: DB_USER
-        sync: false
-      - key: DB_PASS
-        sync: false
-      
+
       # Serverpod requires these generated keys via Blueprint prompts
       - key: SERVICE_SECRET
         generateValue: true
@@ -51,3 +39,9 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+
+databases:
+  - name: dwellly-db
+    databaseName: dwellly_db
+    user: dwellly_db_user
+    plan: free
