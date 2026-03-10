@@ -55,12 +55,14 @@ COPY --from=build /app/dwellly_server/migrations/ migrations/
 # on Render because secret env vars are only available at container runtime.
 
 # Ensure passwords.yaml exists with production credentials
-RUN test -f config/passwords.yaml || echo "production:
+RUN test -f config/passwords.yaml || cat > config/passwords.yaml << 'EOF'
+production:
   database: 'yZqLZmlrtncgcNJ3aaOf7YMGHtMwwNQL'
   serviceSecret: 'jCeW9V_zImKlTv1Sg76A6TpqGeCB0Ejo'
   emailSecretHashPepper: 'WnPg1ks_EiQsnNddES_yrG0-Rksll0ho'
   jwtHmacSha512PrivateKey: 'qP0XF6IaEhaFP8idQn-ehK98SHLEZd2c'
-  jwtRefreshTokenHashPepper: 'zcXFvmuRqQrOWRucLASf5R_mV_DV4m6k'" > config/passwords.yaml
+  jwtRefreshTokenHashPepper: 'zcXFvmuRqQrOWRucLASf5R_mV_DV4m6k'
+EOF
 
 # This file is required to enable the endpoint log filter in Insights.
 COPY --from=build /app/dwellly_server/lib/src/generated/protocol.yaml lib/src/generated/protocol.yaml
