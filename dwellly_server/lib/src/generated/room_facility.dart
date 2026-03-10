@@ -340,8 +340,6 @@ class RoomFacilityRepository {
     _i1.OrderByListBuilder<RoomFacilityTable>? orderByList,
     _i1.Transaction? transaction,
     RoomFacilityInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<RoomFacility>(
       where: where?.call(RoomFacility.t),
@@ -352,8 +350,6 @@ class RoomFacilityRepository {
       offset: offset,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -383,8 +379,6 @@ class RoomFacilityRepository {
     _i1.OrderByListBuilder<RoomFacilityTable>? orderByList,
     _i1.Transaction? transaction,
     RoomFacilityInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<RoomFacility>(
       where: where?.call(RoomFacility.t),
@@ -394,8 +388,6 @@ class RoomFacilityRepository {
       offset: offset,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -405,15 +397,11 @@ class RoomFacilityRepository {
     int id, {
     _i1.Transaction? transaction,
     RoomFacilityInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<RoomFacility>(
       id,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -423,20 +411,14 @@ class RoomFacilityRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
-  ///
-  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
-  /// rows are silently skipped, and only the successfully inserted rows are
-  /// returned.
   Future<List<RoomFacility>> insert(
     _i1.Session session,
     List<RoomFacility> rows, {
     _i1.Transaction? transaction,
-    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<RoomFacility>(
       rows,
       transaction: transaction,
-      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -577,22 +559,6 @@ class RoomFacilityRepository {
     return session.db.count<RoomFacility>(
       where: where?.call(RoomFacility.t),
       limit: limit,
-      transaction: transaction,
-    );
-  }
-
-  /// Acquires row-level locks on [RoomFacility] rows matching the [where] expression.
-  Future<void> lockRows(
-    _i1.Session session, {
-    required _i1.WhereExpressionBuilder<RoomFacilityTable> where,
-    required _i1.LockMode lockMode,
-    required _i1.Transaction transaction,
-    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
-  }) async {
-    return session.db.lockRows<RoomFacility>(
-      where: where(RoomFacility.t),
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }

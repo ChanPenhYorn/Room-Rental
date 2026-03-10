@@ -374,8 +374,6 @@ class BecomeOwnerRequestRepository {
     _i1.OrderByListBuilder<BecomeOwnerRequestTable>? orderByList,
     _i1.Transaction? transaction,
     BecomeOwnerRequestInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<BecomeOwnerRequest>(
       where: where?.call(BecomeOwnerRequest.t),
@@ -386,8 +384,6 @@ class BecomeOwnerRequestRepository {
       offset: offset,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -417,8 +413,6 @@ class BecomeOwnerRequestRepository {
     _i1.OrderByListBuilder<BecomeOwnerRequestTable>? orderByList,
     _i1.Transaction? transaction,
     BecomeOwnerRequestInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<BecomeOwnerRequest>(
       where: where?.call(BecomeOwnerRequest.t),
@@ -428,8 +422,6 @@ class BecomeOwnerRequestRepository {
       offset: offset,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -439,15 +431,11 @@ class BecomeOwnerRequestRepository {
     int id, {
     _i1.Transaction? transaction,
     BecomeOwnerRequestInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<BecomeOwnerRequest>(
       id,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -457,20 +445,14 @@ class BecomeOwnerRequestRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
-  ///
-  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
-  /// rows are silently skipped, and only the successfully inserted rows are
-  /// returned.
   Future<List<BecomeOwnerRequest>> insert(
     _i1.Session session,
     List<BecomeOwnerRequest> rows, {
     _i1.Transaction? transaction,
-    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<BecomeOwnerRequest>(
       rows,
       transaction: transaction,
-      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -613,22 +595,6 @@ class BecomeOwnerRequestRepository {
     return session.db.count<BecomeOwnerRequest>(
       where: where?.call(BecomeOwnerRequest.t),
       limit: limit,
-      transaction: transaction,
-    );
-  }
-
-  /// Acquires row-level locks on [BecomeOwnerRequest] rows matching the [where] expression.
-  Future<void> lockRows(
-    _i1.Session session, {
-    required _i1.WhereExpressionBuilder<BecomeOwnerRequestTable> where,
-    required _i1.LockMode lockMode,
-    required _i1.Transaction transaction,
-    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
-  }) async {
-    return session.db.lockRows<BecomeOwnerRequest>(
-      where: where(BecomeOwnerRequest.t),
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }

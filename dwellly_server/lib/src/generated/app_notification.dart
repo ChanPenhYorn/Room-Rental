@@ -53,7 +53,7 @@ abstract class AppNotification
           : _i3.Protocol().deserialize<Map<String, String>>(
               jsonSerialization['data'],
             ),
-      isRead: _i1.BoolJsonExtension.fromJson(jsonSerialization['isRead']),
+      isRead: jsonSerialization['isRead'] as bool,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -404,8 +404,6 @@ class AppNotificationRepository {
     _i1.OrderByListBuilder<AppNotificationTable>? orderByList,
     _i1.Transaction? transaction,
     AppNotificationInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<AppNotification>(
       where: where?.call(AppNotification.t),
@@ -416,8 +414,6 @@ class AppNotificationRepository {
       offset: offset,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -447,8 +443,6 @@ class AppNotificationRepository {
     _i1.OrderByListBuilder<AppNotificationTable>? orderByList,
     _i1.Transaction? transaction,
     AppNotificationInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<AppNotification>(
       where: where?.call(AppNotification.t),
@@ -458,8 +452,6 @@ class AppNotificationRepository {
       offset: offset,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -469,15 +461,11 @@ class AppNotificationRepository {
     int id, {
     _i1.Transaction? transaction,
     AppNotificationInclude? include,
-    _i1.LockMode? lockMode,
-    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<AppNotification>(
       id,
       transaction: transaction,
       include: include,
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
     );
   }
 
@@ -487,20 +475,14 @@ class AppNotificationRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
-  ///
-  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
-  /// rows are silently skipped, and only the successfully inserted rows are
-  /// returned.
   Future<List<AppNotification>> insert(
     _i1.Session session,
     List<AppNotification> rows, {
     _i1.Transaction? transaction,
-    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<AppNotification>(
       rows,
       transaction: transaction,
-      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -643,22 +625,6 @@ class AppNotificationRepository {
     return session.db.count<AppNotification>(
       where: where?.call(AppNotification.t),
       limit: limit,
-      transaction: transaction,
-    );
-  }
-
-  /// Acquires row-level locks on [AppNotification] rows matching the [where] expression.
-  Future<void> lockRows(
-    _i1.Session session, {
-    required _i1.WhereExpressionBuilder<AppNotificationTable> where,
-    required _i1.LockMode lockMode,
-    required _i1.Transaction transaction,
-    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
-  }) async {
-    return session.db.lockRows<AppNotification>(
-      where: where(AppNotification.t),
-      lockMode: lockMode,
-      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }

@@ -96,18 +96,14 @@ abstract class Room implements _i1.SerializableModel {
           : _i9.Protocol().deserialize<List<String>>(
               jsonSerialization['images'],
             ),
-      isAvailable: _i1.BoolJsonExtension.fromJson(
-        jsonSerialization['isAvailable'],
-      ),
+      isAvailable: jsonSerialization['isAvailable'] as bool,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
       status: _i4.RoomStatus.fromJson((jsonSerialization['status'] as String)),
       rejectionReason: jsonSerialization['rejectionReason'] as String?,
       pendingData: jsonSerialization['pendingData'] as String?,
-      hasPendingEdit: jsonSerialization['hasPendingEdit'] == null
-          ? null
-          : _i1.BoolJsonExtension.fromJson(jsonSerialization['hasPendingEdit']),
+      hasPendingEdit: jsonSerialization['hasPendingEdit'] as bool?,
       facilities: jsonSerialization['facilities'] == null
           ? null
           : _i9.Protocol().deserialize<List<_i5.RoomFacility>>(

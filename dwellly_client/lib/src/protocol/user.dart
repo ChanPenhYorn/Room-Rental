@@ -81,9 +81,7 @@ abstract class User implements _i1.SerializableModel {
       role: _i3.UserRole.fromJson((jsonSerialization['role'] as String)),
       profileImage: jsonSerialization['profileImage'] as String?,
       fcmToken: jsonSerialization['fcmToken'] as String?,
-      isOnline: jsonSerialization['isOnline'] == null
-          ? null
-          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isOnline']),
+      isOnline: jsonSerialization['isOnline'] as bool?,
       lastSeen: jsonSerialization['lastSeen'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['lastSeen']),

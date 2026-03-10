@@ -65,7 +65,7 @@ abstract class ChatMessage implements _i1.SerializableModel {
       attachmentName: jsonSerialization['attachmentName'] as String?,
       attachmentSize: jsonSerialization['attachmentSize'] as int?,
       sentAt: _i1.DateTimeJsonExtension.fromJson(jsonSerialization['sentAt']),
-      isRead: _i1.BoolJsonExtension.fromJson(jsonSerialization['isRead']),
+      isRead: jsonSerialization['isRead'] as bool,
     );
   }
 
