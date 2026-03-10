@@ -46,6 +46,7 @@ COPY --from=build /app/dwellly_server/bin/server server
 
 # Copy configuration files and resources
 COPY --from=build /app/dwellly_server/config/ config/
+COPY --from=build /app/dwellly_server/config/passwords.yaml config/passwords.yaml
 COPY --from=build /app/dwellly_server/web/ web/
 COPY --from=build /app/dwellly_server/migrations/ migrations/
 
@@ -57,6 +58,6 @@ EXPOSE 8080
 EXPOSE 8081
 EXPOSE 8082
 
-# Define the entrypoint command
-ENTRYPOINT ["./server", "--mode=${runmode}", "--server-id=${serverid}", "--logging=${logging}", "--role=${role}"]
+# Define the entrypoint command (shell form for env var expansion)
+ENTRYPOINT ./server --mode=$runmode --server-id=$serverid --logging=$logging --role=$role
 
