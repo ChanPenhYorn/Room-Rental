@@ -32,8 +32,8 @@ webServer:
 database:
   host: dpg-d6ndl5vtskes73fafnqg-a
   port: 5432
-  name: dwellly
-  user: dwellly
+  name: dwellly_db
+  user: dwellly_db_user
   requireSsl: true
   #isUnixSocket: true # defaults to false
   #maxConnectionCount: 10 # Defaults to 10, a negative or null value removes the limit
